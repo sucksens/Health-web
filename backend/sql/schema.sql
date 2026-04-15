@@ -16,8 +16,11 @@ CREATE TABLE IF NOT EXISTS users (
     id          BIGINT UNSIGNED    NOT NULL AUTO_INCREMENT,
     email       VARCHAR(255)       NOT NULL,
     username    VARCHAR(150)       NOT NULL,
+    first_name  VARCHAR(100)       DEFAULT NULL,
+    last_name   VARCHAR(100)       DEFAULT NULL,
     hashed_password VARCHAR(255)   NOT NULL,
     is_active      TINYINT(1)         NOT NULL DEFAULT 1,
+    must_change_password TINYINT(1)   NOT NULL DEFAULT 0 COMMENT 'Obliga al usuario a cambiar contrasena en el siguiente login',
     token_version  INT UNSIGNED       NOT NULL DEFAULT 1 COMMENT 'Se incrementa para invalidar todos los tokens del usuario',
     created_at     DATETIME           NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at     DATETIME           NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -126,6 +129,32 @@ CREATE INDEX idx_refresh_tokens_user   ON refresh_tokens (user_id);
 CREATE INDEX idx_refresh_tokens_expires ON refresh_tokens (expires_at);
 
 -- ============================================================
+-- Tabla: activity_logs
+-- Registro de auditoria de seguridad del sistema.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS activity_logs (
+    id          BIGINT UNSIGNED    NOT NULL AUTO_INCREMENT,
+    user_id     BIGINT UNSIGNED    DEFAULT NULL COMMENT 'NULL para acciones anonimas',
+    action     VARCHAR(100)       NOT NULL   COMMENT 'login, logout, create_user, etc.',
+    module     VARCHAR(50)        NOT NULL   COMMENT 'auth, users, roles, permissions',
+    type       VARCHAR(20)        NOT NULL   COMMENT 'auth, action, error',
+    details    TEXT               DEFAULT NULL COMMENT 'JSON con detalles adicionales',
+    ip_address VARCHAR(45)        DEFAULT NULL COMMENT 'IPv4 o IPv6 del cliente',
+    user_agent VARCHAR(255)       DEFAULT NULL COMMENT 'Navegador o cliente',
+    created_at DATETIME           NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (id),
+    CONSTRAINT fk_activity_logs_user
+        FOREIGN KEY (user_id) REFERENCES users(id)
+        ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+CREATE INDEX idx_activity_logs_user    ON activity_logs (user_id);
+CREATE INDEX idx_activity_logs_module  ON activity_logs (module);
+CREATE INDEX idx_activity_logs_type    ON activity_logs (type);
+CREATE INDEX idx_activity_logs_created ON activity_logs (created_at);
+
+-- ============================================================
 -- Datos iniciales: roles base
 -- ============================================================
 INSERT IGNORE INTO roles (name, description) VALUES
@@ -157,7 +186,9 @@ INSERT IGNORE INTO permissions (code, description, module) VALUES
     ('expenses:update', 'Actualizar gastos',             'expenses'),
     ('expenses:delete', 'Eliminar gastos',               'expenses'),
     -- Reports
-    ('reports:read', 'Leer reportes',                    'reports');
+    ('reports:read', 'Leer reportes',                    'reports'),
+    -- Activity
+    ('activity:read', 'Leer registro de auditoria',      'activity');
 
 -- ============================================================
 -- Datos iniciales: asignar permisos a roles

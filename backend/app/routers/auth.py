@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
@@ -12,7 +12,13 @@ from app.models.refresh_token import RefreshToken
 from app.models.role import Role
 from app.models.user import User
 from app.schemas.auth import LoginRequest, RefreshRequest, TokenData, TokenResponse
-from app.schemas.user import UserCreate, UserOut
+from app.schemas.user import (
+    UserCreate,
+    UserOut,
+    ChangePasswordRequest,
+    ForceChangePasswordRequest,
+)
+from app.services import log_activity
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -50,6 +56,7 @@ def _build_tokens(user: User, db: Session) -> TokenResponse:
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 def register(
     body: UserCreate,
+    request: Request,
     db: Session = Depends(get_db),
 ):
     existing = db.execute(
@@ -76,12 +83,24 @@ def register(
     db.add(user)
     db.flush()
     db.refresh(user)
+
+    log_activity(
+        db,
+        action="register",
+        module="auth",
+        type="auth",
+        user_id=user.id,
+        details={"username": user.username, "email": user.email},
+        request=request,
+    )
+
     return user
 
 
 @router.post("/login", response_model=TokenResponse)
 def login(
     body: LoginRequest,
+    request: Request,
     db: Session = Depends(get_db),
 ):
     user = db.execute(
@@ -89,16 +108,56 @@ def login(
     ).scalar_one_or_none()
 
     if not user or not verify_password(body.password, user.hashed_password):
+        log_activity(
+            db,
+            action="login_failed",
+            module="auth",
+            type="error",
+            details={"username": body.username, "reason": "credenciales_incorrectas"},
+            request=request,
+        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Credenciales incorrectas",
         )
 
     if not user.is_active:
+        log_activity(
+            db,
+            action="login_failed",
+            module="auth",
+            type="error",
+            user_id=user.id,
+            details={"username": body.username, "reason": "cuenta_desactivada"},
+            request=request,
+        )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Cuenta desactivada",
         )
+
+    if user.must_change_password:
+        log_activity(
+            db,
+            action="login_must_change_password",
+            module="auth",
+            type="auth",
+            user_id=user.id,
+            details={"username": user.username},
+            request=request,
+        )
+        response = _build_tokens(user, db)
+        return response
+
+    log_activity(
+        db,
+        action="login",
+        module="auth",
+        type="auth",
+        user_id=user.id,
+        details={"username": user.username},
+        request=request,
+    )
 
     return _build_tokens(user, db)
 
@@ -161,6 +220,7 @@ def refresh(
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 def logout(
     body: RefreshRequest,
+    request: Request,
     db: Session = Depends(get_db),
 ):
     try:
@@ -168,6 +228,7 @@ def logout(
         if payload.get("type") != "refresh":
             return
         jti = payload.get("jti")
+        user_id = int(payload.get("sub", 0))
     except Exception:
         return
 
@@ -178,9 +239,21 @@ def logout(
     if stored_token and stored_token.revoked_at is None:
         stored_token.revoked_at = datetime.now(timezone.utc)
 
+    if user_id:
+        log_activity(
+            db,
+            action="logout",
+            module="auth",
+            type="auth",
+            user_id=user_id,
+            request=request,
+        )
+
 
 @router.post("/logout-all", status_code=status.HTTP_204_NO_CONTENT)
-def logout_all(current_user: CurrentUser, db: Session = Depends(get_db)):
+def logout_all(
+    current_user: CurrentUser, request: Request, db: Session = Depends(get_db)
+):
     current_user.token_version += 1
 
     db.execute(
@@ -192,7 +265,108 @@ def logout_all(current_user: CurrentUser, db: Session = Depends(get_db)):
         .values(revoked_at=datetime.now(timezone.utc))
     )
 
+    log_activity(
+        db,
+        action="logout_all",
+        module="auth",
+        type="auth",
+        user_id=current_user.id,
+        details={"username": current_user.username},
+        request=request,
+    )
+
 
 @router.get("/me", response_model=UserOut)
 def get_me(current_user: CurrentUser):
     return current_user
+
+
+@router.post("/change-password", status_code=status.HTTP_204_NO_CONTENT)
+def change_password(
+    body: ChangePasswordRequest,
+    request: Request,
+    current_user: CurrentUser,
+    db: Session = Depends(get_db),
+):
+    if not verify_password(body.current_password, current_user.hashed_password):
+        log_activity(
+            db,
+            action="change_password_failed",
+            module="auth",
+            type="error",
+            user_id=current_user.id,
+            details={"reason": "contrasena_actual_incorrecta"},
+            request=request,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="La contrasena actual es incorrecta",
+        )
+
+    current_user.hashed_password = hash_password(body.new_password)
+    current_user.must_change_password = False
+    current_user.token_version += 1
+
+    db.execute(
+        update(RefreshToken)
+        .where(
+            RefreshToken.user_id == current_user.id,
+            RefreshToken.revoked_at.is_(None),
+        )
+        .values(revoked_at=datetime.now(timezone.utc))
+    )
+
+    log_activity(
+        db,
+        action="change_password",
+        module="auth",
+        type="auth",
+        user_id=current_user.id,
+        details={"username": current_user.username},
+        request=request,
+    )
+
+
+@router.post("/force-change-password", response_model=TokenResponse)
+def force_change_password(
+    body: ForceChangePasswordRequest,
+    request: Request,
+    current_user: CurrentUser,
+    db: Session = Depends(get_db),
+):
+    if not current_user.must_change_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No se requiere cambio de contrasena",
+        )
+
+    if body.new_password != body.confirm_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Las contrasenas no coinciden",
+        )
+
+    current_user.hashed_password = hash_password(body.new_password)
+    current_user.must_change_password = False
+    current_user.token_version += 1
+
+    db.execute(
+        update(RefreshToken)
+        .where(
+            RefreshToken.user_id == current_user.id,
+            RefreshToken.revoked_at.is_(None),
+        )
+        .values(revoked_at=datetime.now(timezone.utc))
+    )
+
+    log_activity(
+        db,
+        action="force_change_password",
+        module="auth",
+        type="auth",
+        user_id=current_user.id,
+        details={"username": current_user.username},
+        request=request,
+    )
+
+    return _build_tokens(current_user, db)

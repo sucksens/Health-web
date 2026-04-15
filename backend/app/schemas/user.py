@@ -14,14 +14,21 @@ class UserCreate(BaseModel):
 class UserUpdate(BaseModel):
     email: EmailStr | None = None
     username: str | None = Field(default=None, min_length=3, max_length=150)
+    first_name: str | None = Field(default=None, max_length=100)
+    last_name: str | None = Field(default=None, max_length=100)
     is_active: bool | None = None
+    password: str | None = Field(default=None, min_length=6, max_length=128)
+    must_change_password: bool | None = None
 
 
 class UserOut(BaseModel):
     id: int
     email: str
     username: str
+    first_name: str | None
+    last_name: str | None
     is_active: bool
+    must_change_password: bool
     created_at: datetime
     roles: list[RoleOut] = []
 
@@ -43,6 +50,11 @@ class AssignRoleRequest(BaseModel):
 class ChangePasswordRequest(BaseModel):
     current_password: str
     new_password: str = Field(min_length=6, max_length=128)
+
+
+class ForceChangePasswordRequest(BaseModel):
+    new_password: str = Field(min_length=6, max_length=128)
+    confirm_password: str = Field(min_length=6, max_length=128)
 
 
 class SessionOut(BaseModel):

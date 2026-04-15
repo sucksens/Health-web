@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
@@ -17,6 +17,7 @@ from app.schemas.user import (
     UserOut,
     UserUpdate,
 )
+from app.services import log_activity
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -27,7 +28,7 @@ router = APIRouter(prefix="/users", tags=["Users"])
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_permissions("users:create"))],
 )
-def create_user(body: UserAdminCreate, db: Session = Depends(get_db)):
+def create_user(body: UserAdminCreate, request: Request, db: Session = Depends(get_db)):
     existing = db.execute(
         select(User).where(
             (User.email == body.email) | (User.username == body.username)
@@ -60,6 +61,21 @@ def create_user(body: UserAdminCreate, db: Session = Depends(get_db)):
     db.add(user)
     db.flush()
     db.refresh(user)
+
+    log_activity(
+        db,
+        action="create_user",
+        module="users",
+        type="action",
+        user_id=request.state.user_id if hasattr(request.state, "user_id") else None,
+        details={
+            "created_user_id": user.id,
+            "username": user.username,
+            "email": user.email,
+        },
+        request=request,
+    )
+
     return user
 
 
@@ -92,18 +108,58 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
     response_model=UserOut,
     dependencies=[Depends(require_permissions("users:update"))],
 )
-def update_user(user_id: int, body: UserUpdate, db: Session = Depends(get_db)):
+def update_user(
+    user_id: int, body: UserUpdate, request: Request, db: Session = Depends(get_db)
+):
     user = db.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado"
         )
 
-    for key, value in body.model_dump(exclude_unset=True).items():
+    changes = body.model_dump(exclude_unset=True)
+    password_changed = False
+
+    if "password" in changes:
+        raw_password = changes.pop("password")
+        user.hashed_password = hash_password(raw_password)
+        user.token_version += 1
+        password_changed = True
+
+        db.execute(
+            update(RefreshToken)
+            .where(
+                RefreshToken.user_id == user_id,
+                RefreshToken.revoked_at.is_(None),
+            )
+            .values(revoked_at=datetime.now(timezone.utc))
+        )
+
+    if "must_change_password" in changes:
+        user.must_change_password = changes.pop("must_change_password")
+
+    for key, value in changes.items():
         setattr(user, key, value)
 
     db.flush()
     db.refresh(user)
+
+    log_details: dict = {"target_user_id": user_id}
+    if password_changed:
+        log_details["password_changed"] = True
+    if body.must_change_password is not None:
+        log_details["must_change_password"] = body.must_change_password
+
+    log_activity(
+        db,
+        action="update_user",
+        module="users",
+        type="action",
+        user_id=request.state.user_id if hasattr(request.state, "user_id") else None,
+        details=log_details,
+        request=request,
+    )
+
     return user
 
 
@@ -112,12 +168,23 @@ def update_user(user_id: int, body: UserUpdate, db: Session = Depends(get_db)):
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_permissions("users:delete"))],
 )
-def delete_user(user_id: int, db: Session = Depends(get_db)):
+def delete_user(user_id: int, request: Request, db: Session = Depends(get_db)):
     user = db.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado"
         )
+
+    log_activity(
+        db,
+        action="delete_user",
+        module="users",
+        type="action",
+        user_id=request.state.user_id if hasattr(request.state, "user_id") else None,
+        details={"deleted_user_id": user_id, "username": user.username},
+        request=request,
+    )
+
     db.delete(user)
 
 
@@ -126,7 +193,12 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
     response_model=UserOut,
     dependencies=[Depends(require_permissions("users:update", "roles:update"))],
 )
-def assign_roles(user_id: int, body: AssignRoleRequest, db: Session = Depends(get_db)):
+def assign_roles(
+    user_id: int,
+    body: AssignRoleRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+):
     user = db.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
     if not user:
         raise HTTPException(
@@ -144,6 +216,17 @@ def assign_roles(user_id: int, body: AssignRoleRequest, db: Session = Depends(ge
     user.roles = list(roles)
     db.flush()
     db.refresh(user)
+
+    log_activity(
+        db,
+        action="assign_roles",
+        module="users",
+        type="action",
+        user_id=request.state.user_id if hasattr(request.state, "user_id") else None,
+        details={"target_user_id": user_id, "role_ids": body.role_ids},
+        request=request,
+    )
+
     return user
 
 
@@ -189,7 +272,7 @@ def list_sessions(user_id: int, db: Session = Depends(get_db)):
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_permissions("users:sessions"))],
 )
-def invalidate_sessions(user_id: int, db: Session = Depends(get_db)):
+def invalidate_sessions(user_id: int, request: Request, db: Session = Depends(get_db)):
     user = db.execute(select(User).where(User.id == user_id)).scalar_one_or_none()
     if not user:
         raise HTTPException(
@@ -205,4 +288,14 @@ def invalidate_sessions(user_id: int, db: Session = Depends(get_db)):
             RefreshToken.revoked_at.is_(None),
         )
         .values(revoked_at=datetime.now(timezone.utc))
+    )
+
+    log_activity(
+        db,
+        action="invalidate_sessions",
+        module="users",
+        type="action",
+        user_id=request.state.user_id if hasattr(request.state, "user_id") else None,
+        details={"target_user_id": user_id, "target_username": user.username},
+        request=request,
     )

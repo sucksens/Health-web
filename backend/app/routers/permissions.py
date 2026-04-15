@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -6,6 +6,7 @@ from app.auth.dependencies import require_permissions
 from app.database.db import get_db
 from app.models.permission import Permission
 from app.schemas.permission import PermissionCreate, PermissionOut
+from app.services import log_activity
 
 router = APIRouter(prefix="/permissions", tags=["Permissions"])
 
@@ -34,7 +35,9 @@ def list_permissions(
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_permissions("permissions:create"))],
 )
-def create_permission(body: PermissionCreate, db: Session = Depends(get_db)):
+def create_permission(
+    body: PermissionCreate, request: Request, db: Session = Depends(get_db)
+):
     existing = db.execute(
         select(Permission).where(Permission.code == body.code)
     ).scalar_one_or_none()
@@ -52,4 +55,18 @@ def create_permission(body: PermissionCreate, db: Session = Depends(get_db)):
     db.add(permission)
     db.flush()
     db.refresh(permission)
+
+    log_activity(
+        db,
+        action="create_permission",
+        module="permissions",
+        type="action",
+        details={
+            "permission_id": permission.id,
+            "code": body.code,
+            "module": body.module,
+        },
+        request=request,
+    )
+
     return permission
