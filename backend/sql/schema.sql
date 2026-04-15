@@ -142,6 +142,7 @@ INSERT IGNORE INTO permissions (code, description, module) VALUES
     ('users:read',   'Leer usuarios',                    'users'),
     ('users:update', 'Actualizar usuarios',              'users'),
     ('users:delete', 'Eliminar usuarios',                'users'),
+    ('users:sessions', 'Gestionar sesiones de usuarios', 'users'),
     -- Roles
     ('roles:create', 'Crear roles',                      'roles'),
     ('roles:read',   'Leer roles',                       'roles'),
