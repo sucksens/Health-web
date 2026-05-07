@@ -13,7 +13,7 @@ _INSECURE_SECRETS = {
 
 
 class Settings(BaseSettings):
-    DATABASE_URL: str = "mysql+pymysql://root:password@localhost:3306/gastos_db"
+    DATABASE_URL: str = "sqlite:///./gastos.db"
     JWT_SECRET_KEY: str = "change-this-secret-in-production"
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
@@ -21,6 +21,12 @@ class Settings(BaseSettings):
     CORS_ORIGINS: list[str] = []
 
     model_config = {"env_file": ".env", "extra": "ignore"}
+
+    @property
+    def db_engine(self) -> str:
+        if self.DATABASE_URL.startswith("sqlite"):
+            return "sqlite"
+        return "mysql"
 
     @model_validator(mode="after")
     def _validate_jwt_secret(self) -> "Settings":
