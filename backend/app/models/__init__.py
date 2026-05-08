@@ -5,6 +5,7 @@ from app.models.role import Role
 from app.models.permission import Permission
 from app.models.associations import UserRole, RolePermission
 from app.models.refresh_token import RefreshToken
+from app.models.weight_goal import WeightGoal
 
 __all__ = [
     "ActivityLog",
@@ -15,4 +16,5 @@ __all__ = [
     "UserRole",
     "RolePermission",
     "RefreshToken",
+    "WeightGoal",
 ]
