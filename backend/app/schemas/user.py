@@ -16,6 +16,8 @@ class UserUpdate(BaseModel):
     username: str | None = Field(default=None, min_length=3, max_length=150)
     first_name: str | None = Field(default=None, max_length=100)
     last_name: str | None = Field(default=None, max_length=100)
+    height_cm: float | None = Field(default=None, gt=0, le=300)
+    sex: str | None = Field(default=None, pattern="^(male|female)$")
     is_active: bool | None = None
     password: str | None = Field(default=None, min_length=6, max_length=128)
     must_change_password: bool | None = None
@@ -27,6 +29,8 @@ class UserOut(BaseModel):
     username: str
     first_name: str | None
     last_name: str | None
+    height_cm: float | None
+    sex: str | None
     is_active: bool
     must_change_password: bool
     created_at: datetime

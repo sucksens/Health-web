@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from sqlalchemy import Integer, DateTime, ForeignKey, String, Text
+from sqlalchemy import Float, Integer, DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.db import Base
@@ -17,6 +17,8 @@ class User(Base):
     first_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     last_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    height_cm: Mapped[float | None] = mapped_column(Float, nullable=True)
+    sex: Mapped[str | None] = mapped_column(String(20), nullable=True)
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
     must_change_password: Mapped[bool] = mapped_column(default=False, nullable=False)
     token_version: Mapped[int] = mapped_column(default=1, nullable=False)
@@ -31,6 +33,10 @@ class User(Base):
 
     roles: Mapped[list["Role"]] = relationship(
         secondary="user_roles", back_populates="users", lazy="selectin"
+    )
+
+    body_metrics: Mapped[list["BodyMetric"]] = relationship(
+        back_populates="user", lazy="select", order_by="BodyMetric.recorded_at.desc()"
     )
 
     def __repr__(self) -> str:

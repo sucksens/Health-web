@@ -33,6 +33,10 @@ _PERMISSIONS = [
     ("expenses:delete", "Eliminar gastos", "expenses"),
     ("reports:read", "Leer reportes", "reports"),
     ("activity:read", "Leer registro de auditoria", "activity"),
+    ("body_metrics:create", "Crear mediciones corporales", "body_metrics"),
+    ("body_metrics:read", "Leer mediciones corporales", "body_metrics"),
+    ("body_metrics:update", "Actualizar mediciones corporales", "body_metrics"),
+    ("body_metrics:delete", "Eliminar mediciones corporales", "body_metrics"),
 ]
 
 _ADMIN_PERMISSIONS = {p[0] for p in _PERMISSIONS}
@@ -43,8 +47,19 @@ _MANAGER_PERMISSIONS = {
     "expenses:delete",
     "reports:read",
     "users:read",
+    "body_metrics:create",
+    "body_metrics:read",
+    "body_metrics:update",
+    "body_metrics:delete",
 }
-_USER_PERMISSIONS = {"expenses:read", "expenses:create"}
+_USER_PERMISSIONS = {
+    "expenses:read",
+    "expenses:create",
+    "body_metrics:create",
+    "body_metrics:read",
+    "body_metrics:update",
+    "body_metrics:delete",
+}
 
 _ROLE_PERMISSIONS = {
     "admin": _ADMIN_PERMISSIONS,

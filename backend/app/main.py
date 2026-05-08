@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config.settings import settings
-from app.routers import activity, auth, permissions, roles, users
+from app.routers import activity, auth, body_metrics, permissions, roles, users
 
 app = FastAPI(
     title="Gastos API",
@@ -20,11 +20,12 @@ app.add_middleware(
 
 api_prefix = "/api/v1"
 
-app.include_router(auth.router, prefix=api_prefix)
-app.include_router(users.router, prefix=api_prefix)
-app.include_router(roles.router, prefix=api_prefix)
-app.include_router(permissions.router, prefix=api_prefix)
-app.include_router(activity.router, prefix=api_prefix)
+app.include_router(auth, prefix=api_prefix)
+app.include_router(users, prefix=api_prefix)
+app.include_router(roles, prefix=api_prefix)
+app.include_router(permissions, prefix=api_prefix)
+app.include_router(activity, prefix=api_prefix)
+app.include_router(body_metrics, prefix=api_prefix)
 
 
 @app.get("/health")
