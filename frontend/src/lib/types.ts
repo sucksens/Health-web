@@ -15,14 +15,6 @@ export interface TokenResponse {
   token_type: string
 }
 
-export interface PermissionOut {
-  id: number
-  code: string
-  description: string | null
-  module: string | null
-  created_at: string
-}
-
 export interface RoleOut {
   id: number
   name: string
@@ -32,31 +24,15 @@ export interface RoleOut {
   updated_at: string
 }
 
-export interface UserOut {
+export interface PermissionOut {
   id: number
-  email: string
-  username: string
-  first_name: string | null
-  last_name: string | null
-  height_cm: number | null
-  sex: string | null
-  is_active: boolean
-  must_change_password: boolean
+  code: string
+  description: string | null
+  module: string | null
   created_at: string
-  roles: RoleOut[]
 }
 
-export interface ChangePasswordRequest {
-  current_password: string
-  new_password: string
-}
-
-export interface ForceChangePasswordRequest {
-  new_password: string
-  confirm_password: string
-}
-
-export interface AuthUser {
+export interface UserOut {
   id: number
   email: string
   username: string
@@ -98,6 +74,16 @@ export interface UserUpdate {
   must_change_password?: boolean
 }
 
+export interface ChangePasswordRequest {
+  current_password: string
+  new_password: string
+}
+
+export interface ForceChangePasswordRequest {
+  new_password: string
+  confirm_password: string
+}
+
 export interface UserAdminCreate {
   email: string
   username: string
@@ -112,6 +98,20 @@ export interface AssignRoleRequest {
 
 export interface AssignPermissionsRequest {
   permission_ids: number[]
+}
+
+export interface AuthUser {
+  id: number
+  email: string
+  username: string
+  first_name: string | null
+  last_name: string | null
+  height_cm: number | null
+  sex: string | null
+  is_active: boolean
+  must_change_password: boolean
+  created_at: string
+  roles: RoleOut[]
 }
 
 export interface SessionOut {

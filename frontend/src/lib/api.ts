@@ -137,6 +137,7 @@ async function tryRefresh(): Promise<boolean> {
   }
 }
 
+// Auth
 export const authApi = {
   login: async (body: LoginRequest): Promise<TokenResponse> => {
     const data = await request<TokenResponse>("/auth/login", {
@@ -169,6 +170,11 @@ export const authApi = {
     clearTokens()
   },
 
+  logoutAll: async (): Promise<void> => {
+    await request("/auth/logout-all", { method: "POST" })
+    clearTokens()
+  },
+
   changePassword: async (body: ChangePasswordRequest): Promise<void> => {
     return request("/auth/change-password", {
       method: "POST",
@@ -188,8 +194,7 @@ export const authApi = {
   },
 }
 
-export { setTokens, clearTokens, getAccessToken, getRefreshToken, ApiError }
-
+// Users
 export const usersApi = {
   list: async (skip = 0, limit = 50): Promise<UserOut[]> => {
     return request<UserOut[]>(`/users?skip=${skip}&limit=${limit}`)
@@ -233,6 +238,7 @@ export const usersApi = {
   },
 }
 
+// Roles
 export const rolesApi = {
   list: async (skip = 0, limit = 50): Promise<RoleOut[]> => {
     return request<RoleOut[]>(`/roles?skip=${skip}&limit=${limit}`)
@@ -271,6 +277,7 @@ export const rolesApi = {
   },
 }
 
+// Permissions
 export const permissionsApi = {
   list: async (module?: string): Promise<PermissionOut[]> => {
     const params = module ? `?module=${module}` : ""
@@ -285,6 +292,7 @@ export const permissionsApi = {
   },
 }
 
+// Activity
 export const activityApi = {
   list: async (params?: {
     skip?: number
@@ -383,3 +391,5 @@ export const weightGoalsApi = {
     return request(`/weight-goals/${id}`, { method: "DELETE" })
   },
 }
+
+export { setTokens, clearTokens, getAccessToken, getRefreshToken, ApiError }
