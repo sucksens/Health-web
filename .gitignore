@@ -51,3 +51,7 @@ yarn-error.log*
 credentials.json
 *.pem
 *.key
+
+# Agent skills
+.agents/
+skills-lock.json
