@@ -55,3 +55,4 @@ credentials.json
 # Agent skills
 .agents/
 skills-lock.json
+plans/
