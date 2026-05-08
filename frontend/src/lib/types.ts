@@ -135,3 +135,31 @@ export interface ActivityLogOut {
   user_agent: string | null
   created_at: string
 }
+
+export interface BodyMetricOut {
+  id: number
+  user_id: number
+  weight_kg: number
+  bmi: number
+  waist_cm: number | null
+  chest_cm: number | null
+  arm_cm: number | null
+  recorded_at: string
+  created_at: string
+}
+
+export interface BodyMetricCreate {
+  weight_kg: number
+  waist_cm?: number | null
+  chest_cm?: number | null
+  arm_cm?: number | null
+  recorded_at?: string | null
+}
+
+export interface BodyMetricUpdate {
+  weight_kg?: number | null
+  waist_cm?: number | null
+  chest_cm?: number | null
+  arm_cm?: number | null
+  recorded_at?: string | null
+}

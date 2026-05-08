@@ -16,6 +16,9 @@ import type {
   ActivityLogOut,
   ChangePasswordRequest,
   ForceChangePasswordRequest,
+  BodyMetricOut,
+  BodyMetricCreate,
+  BodyMetricUpdate,
 } from "./types"
 
 const API_BASE = import.meta.env.API_URL || "http://localhost:8000/api/v1"
@@ -293,5 +296,37 @@ export const activityApi = {
     if (params?.user_id) searchParams.set("user_id", String(params.user_id))
     const qs = searchParams.toString()
     return request<ActivityLogOut[]>(`/activity${qs ? `?${qs}` : ""}`)
+  },
+}
+
+export const bodyMetricsApi = {
+  list: async (skip = 0, limit = 50): Promise<BodyMetricOut[]> => {
+    return request<BodyMetricOut[]>(`/body-metrics?skip=${skip}&limit=${limit}`)
+  },
+
+  getLatest: async (): Promise<BodyMetricOut | null> => {
+    return request<BodyMetricOut | null>("/body-metrics/latest")
+  },
+
+  get: async (id: number): Promise<BodyMetricOut> => {
+    return request<BodyMetricOut>(`/body-metrics/${id}`)
+  },
+
+  create: async (body: BodyMetricCreate): Promise<BodyMetricOut> => {
+    return request<BodyMetricOut>("/body-metrics", {
+      method: "POST",
+      body: JSON.stringify(body),
+    })
+  },
+
+  update: async (id: number, body: BodyMetricUpdate): Promise<BodyMetricOut> => {
+    return request<BodyMetricOut>(`/body-metrics/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    })
+  },
+
+  delete: async (id: number): Promise<void> => {
+    return request(`/body-metrics/${id}`, { method: "DELETE" })
   },
 }
