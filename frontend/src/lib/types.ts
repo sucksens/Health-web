@@ -163,3 +163,42 @@ export interface BodyMetricUpdate {
   arm_cm?: number | null
   recorded_at?: string | null
 }
+
+export interface WeightGoalOut {
+  id: number
+  user_id: number
+  target_weight_kg: number
+  start_weight_kg: number
+  target_date: string
+  status: string
+  notes: string | null
+  achieved_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface WeightGoalWithProgress extends WeightGoalOut {
+  current_weight: number | null
+  progress: number | null
+  days_remaining: number
+  total_change: number | null
+  avg_weekly_change: number | null
+}
+
+export interface WeightGoalCreate {
+  target_weight_kg: number
+  start_weight_kg: number
+  target_date: string
+  notes?: string | null
+}
+
+export interface WeightGoalUpdate {
+  target_weight_kg?: number | null
+  target_date?: string | null
+  notes?: string | null
+}
+
+export interface WeightGoalDetailResponse {
+  goal: WeightGoalWithProgress
+  metrics: BodyMetricOut[]
+}

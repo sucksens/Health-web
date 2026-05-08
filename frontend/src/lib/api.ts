@@ -19,6 +19,11 @@ import type {
   BodyMetricOut,
   BodyMetricCreate,
   BodyMetricUpdate,
+  WeightGoalOut,
+  WeightGoalWithProgress,
+  WeightGoalCreate,
+  WeightGoalUpdate,
+  WeightGoalDetailResponse,
 } from "./types"
 
 const API_BASE = import.meta.env.API_URL || "http://localhost:8000/api/v1"
@@ -328,5 +333,53 @@ export const bodyMetricsApi = {
 
   delete: async (id: number): Promise<void> => {
     return request(`/body-metrics/${id}`, { method: "DELETE" })
+  },
+}
+
+export const weightGoalsApi = {
+  getActive: async (): Promise<WeightGoalWithProgress | null> => {
+    return request<WeightGoalWithProgress | null>("/weight-goals/active")
+  },
+
+  list: async (skip = 0, limit = 50): Promise<WeightGoalOut[]> => {
+    return request<WeightGoalOut[]>(`/weight-goals?skip=${skip}&limit=${limit}`)
+  },
+
+  get: async (id: number): Promise<WeightGoalOut> => {
+    return request<WeightGoalOut>(`/weight-goals/${id}`)
+  },
+
+  getDetails: async (id: number): Promise<WeightGoalDetailResponse> => {
+    return request<WeightGoalDetailResponse>(`/weight-goals/${id}/details`)
+  },
+
+  create: async (body: WeightGoalCreate): Promise<WeightGoalOut> => {
+    return request<WeightGoalOut>("/weight-goals", {
+      method: "POST",
+      body: JSON.stringify(body),
+    })
+  },
+
+  update: async (id: number, body: WeightGoalUpdate): Promise<WeightGoalOut> => {
+    return request<WeightGoalOut>(`/weight-goals/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    })
+  },
+
+  achieve: async (id: number): Promise<WeightGoalOut> => {
+    return request<WeightGoalOut>(`/weight-goals/${id}/achieve`, {
+      method: "POST",
+    })
+  },
+
+  abandon: async (id: number): Promise<WeightGoalOut> => {
+    return request<WeightGoalOut>(`/weight-goals/${id}/abandon`, {
+      method: "POST",
+    })
+  },
+
+  delete: async (id: number): Promise<void> => {
+    return request(`/weight-goals/${id}`, { method: "DELETE" })
   },
 }
