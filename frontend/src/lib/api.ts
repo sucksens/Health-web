@@ -13,6 +13,7 @@ import type {
   AssignRoleRequest,
   AssignPermissionsRequest,
   SessionOut,
+  ActivityLogOut,
   ChangePasswordRequest,
   ForceChangePasswordRequest,
 } from "./types"
@@ -273,5 +274,24 @@ export const permissionsApi = {
       method: "POST",
       body: JSON.stringify(body),
     })
+  },
+}
+
+export const activityApi = {
+  list: async (params?: {
+    skip?: number
+    limit?: number
+    module?: string
+    type?: string
+    user_id?: number
+  }): Promise<ActivityLogOut[]> => {
+    const searchParams = new URLSearchParams()
+    if (params?.skip) searchParams.set("skip", String(params.skip))
+    if (params?.limit) searchParams.set("limit", String(params.limit))
+    if (params?.module) searchParams.set("module", params.module)
+    if (params?.type) searchParams.set("type", params.type)
+    if (params?.user_id) searchParams.set("user_id", String(params.user_id))
+    const qs = searchParams.toString()
+    return request<ActivityLogOut[]>(`/activity${qs ? `?${qs}` : ""}`)
   },
 }

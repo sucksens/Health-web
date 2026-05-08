@@ -122,3 +122,16 @@ export interface SessionOut {
   revoked_at: string | null
   is_active: boolean
 }
+
+export interface ActivityLogOut {
+  id: number
+  user_id: number | null
+  username: string | null
+  action: string
+  module: string
+  type: string
+  details: Record<string, any> | string | null
+  ip_address: string | null
+  user_agent: string | null
+  created_at: string
+}
