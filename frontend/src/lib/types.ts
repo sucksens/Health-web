@@ -69,3 +69,56 @@ export interface AuthUser {
   created_at: string
   roles: RoleOut[]
 }
+
+export interface RoleCreate {
+  name: string
+  description?: string
+}
+
+export interface RoleUpdate {
+  name?: string
+  description?: string
+}
+
+export interface PermissionCreate {
+  code: string
+  description?: string
+  module?: string
+}
+
+export interface UserUpdate {
+  email?: string
+  username?: string
+  first_name?: string | null
+  last_name?: string | null
+  height_cm?: number | null
+  sex?: string | null
+  is_active?: boolean
+  password?: string
+  must_change_password?: boolean
+}
+
+export interface UserAdminCreate {
+  email: string
+  username: string
+  password: string
+  is_active?: boolean
+  role_ids?: number[]
+}
+
+export interface AssignRoleRequest {
+  role_ids: number[]
+}
+
+export interface AssignPermissionsRequest {
+  permission_ids: number[]
+}
+
+export interface SessionOut {
+  id: number
+  token_jti: string
+  created_at: string
+  expires_at: string
+  revoked_at: string | null
+  is_active: boolean
+}

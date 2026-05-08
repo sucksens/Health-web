@@ -3,6 +3,16 @@ import type {
   RegisterRequest,
   TokenResponse,
   UserOut,
+  RoleOut,
+  PermissionOut,
+  RoleCreate,
+  RoleUpdate,
+  PermissionCreate,
+  UserUpdate,
+  UserAdminCreate,
+  AssignRoleRequest,
+  AssignPermissionsRequest,
+  SessionOut,
   ChangePasswordRequest,
   ForceChangePasswordRequest,
 } from "./types"
@@ -170,3 +180,98 @@ export const authApi = {
 }
 
 export { setTokens, clearTokens, getAccessToken, getRefreshToken, ApiError }
+
+export const usersApi = {
+  list: async (skip = 0, limit = 50): Promise<UserOut[]> => {
+    return request<UserOut[]>(`/users?skip=${skip}&limit=${limit}`)
+  },
+
+  get: async (id: number): Promise<UserOut> => {
+    return request<UserOut>(`/users/${id}`)
+  },
+
+  create: async (body: UserAdminCreate): Promise<UserOut> => {
+    return request<UserOut>("/users", {
+      method: "POST",
+      body: JSON.stringify(body),
+    })
+  },
+
+  update: async (id: number, body: UserUpdate): Promise<UserOut> => {
+    return request<UserOut>(`/users/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    })
+  },
+
+  delete: async (id: number): Promise<void> => {
+    return request(`/users/${id}`, { method: "DELETE" })
+  },
+
+  assignRoles: async (id: number, body: AssignRoleRequest): Promise<UserOut> => {
+    return request<UserOut>(`/users/${id}/roles`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    })
+  },
+
+  sessions: async (id: number): Promise<SessionOut[]> => {
+    return request<SessionOut[]>(`/users/${id}/sessions`)
+  },
+
+  invalidateSessions: async (id: number): Promise<void> => {
+    return request(`/users/${id}/invalidate-sessions`, { method: "POST" })
+  },
+}
+
+export const rolesApi = {
+  list: async (skip = 0, limit = 50): Promise<RoleOut[]> => {
+    return request<RoleOut[]>(`/roles?skip=${skip}&limit=${limit}`)
+  },
+
+  get: async (id: number): Promise<RoleOut> => {
+    return request<RoleOut>(`/roles/${id}`)
+  },
+
+  create: async (body: RoleCreate): Promise<RoleOut> => {
+    return request<RoleOut>("/roles", {
+      method: "POST",
+      body: JSON.stringify(body),
+    })
+  },
+
+  update: async (id: number, body: RoleUpdate): Promise<RoleOut> => {
+    return request<RoleOut>(`/roles/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    })
+  },
+
+  delete: async (id: number): Promise<void> => {
+    return request(`/roles/${id}`, { method: "DELETE" })
+  },
+
+  assignPermissions: async (
+    id: number,
+    body: AssignPermissionsRequest
+  ): Promise<RoleOut> => {
+    return request<RoleOut>(`/roles/${id}/permissions`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    })
+  },
+}
+
+export const permissionsApi = {
+  list: async (module?: string): Promise<PermissionOut[]> => {
+    const params = module ? `?module=${module}` : ""
+    return request<PermissionOut[]>(`/permissions${params}`)
+  },
+
+  create: async (body: PermissionCreate): Promise<PermissionOut> => {
+    return request<PermissionOut>("/permissions", {
+      method: "POST",
+      body: JSON.stringify(body),
+    })
+  },
+}
