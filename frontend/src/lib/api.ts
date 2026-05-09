@@ -559,8 +559,12 @@ export const medicalHistoryApi = {
   },
 
   documents: {
-    list: async (): Promise<MedicalDocumentOut[]> => {
-      return request<MedicalDocumentOut[]>("/medical-history/documents")
+    list: async (params?: { search?: string; docType?: string }): Promise<MedicalDocumentOut[]> => {
+      const qs = new URLSearchParams()
+      if (params?.search) qs.set("search", params.search)
+      if (params?.docType) qs.set("doc_type", params.docType)
+      const query = qs.toString()
+      return request<MedicalDocumentOut[]>(`/medical-history/documents${query ? `?${query}` : ""}`)
     },
     get: async (id: number): Promise<MedicalDocumentOut> => {
       return request<MedicalDocumentOut>(`/medical-history/documents/${id}`)
@@ -587,6 +591,32 @@ export const medicalHistoryApi = {
     },
     delete: async (id: number): Promise<void> => {
       return request(`/medical-history/documents/${id}`, { method: "DELETE" })
+    },
+    download: async (id: number): Promise<void> => {
+      const token = getAccessToken()
+      const res = await fetch(`${API_BASE}/medical-history/documents/${id}/download`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) {
+        let detail = "Error al descargar archivo"
+        try { const b = await res.json(); detail = b.detail || detail } catch {}
+        throw new ApiError(res.status, detail)
+      }
+      const contentDisposition = res.headers.get("content-disposition")
+      let filename = "documento"
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename\*?=(?:UTF-8'')?["']?([^;"'\n]+)/i)
+        if (match) filename = decodeURIComponent(match[1])
+      }
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
     },
   },
 

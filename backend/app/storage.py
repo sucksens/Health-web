@@ -17,7 +17,7 @@ def _get_user_dir(user_id: int) -> Path:
     return user_dir
 
 
-async def save_upload(file: UploadFile, user_id: int) -> tuple[str, str]:
+async def save_upload(file: UploadFile, user_id: int) -> tuple[str, str, int]:
     ext = Path(file.filename or "file").suffix.lower()
     if ext not in ALLOWED_EXTENSIONS:
         raise ValueError(f"Extension no permitida: {ext}")
@@ -35,7 +35,7 @@ async def save_upload(file: UploadFile, user_id: int) -> tuple[str, str]:
     with open(file_path, "wb") as f:
         f.write(content)
 
-    return filename, str(file_path)
+    return filename, str(file_path), len(content)
 
 
 def delete_file(file_path: str) -> None:

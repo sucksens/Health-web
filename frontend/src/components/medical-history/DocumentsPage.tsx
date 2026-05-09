@@ -18,7 +18,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { RiUploadLine, RiMoreLine, RiDeleteBinLine, RiFileLine } from "@remixicon/react"
+import { RiUploadLine, RiMoreLine, RiDeleteBinLine, RiFileLine, RiDownloadLine, RiSearchLine } from "@remixicon/react"
 import { toast } from "sonner"
 
 const docTypes = [
@@ -32,10 +32,13 @@ const docTypes = [
 export function DocumentsPage() {
   const { hasPermission } = useAuth()
   const [documents, setDocuments] = useState<MedicalDocumentOut[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(true)
   const [showUpload, setShowUpload] = useState(false)
   const [deleteDoc, setDeleteDoc] = useState<MedicalDocumentOut | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [typeFilter, setTypeFilter] = useState("")
   const fileRef = useRef<HTMLInputElement>(null)
 
   const [file, setFile] = useState<File | null>(null)
@@ -45,17 +48,28 @@ export function DocumentsPage() {
   const canCreate = hasPermission("medical_history:create")
   const canDelete = hasPermission("medical_history:delete")
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (search?: string, docType?: string) => {
+    setLoading(true)
     try {
-      setDocuments(await medicalHistoryApi.documents.list())
+      const params: { search?: string; docType?: string } = {}
+      if (search) params.search = search
+      if (docType) params.docType = docType
+      setDocuments(await medicalHistoryApi.documents.list(params))
     } catch (err: any) {
       toast.error(err.detail || "Error al cargar")
     } finally {
       setLoading(false)
+      setInitialLoading(false)
     }
   }, [])
 
-  useEffect(() => { if (canRead) load() }, [canRead, load])
+  useEffect(() => {
+    if (!canRead) return
+    const timer = setTimeout(() => {
+      load(searchQuery, typeFilter)
+    }, searchQuery ? 300 : 0)
+    return () => clearTimeout(timer)
+  }, [canRead, searchQuery, typeFilter, load])
 
   const handleUpload = async () => {
     if (!file) { toast.error("Selecciona un archivo"); return }
@@ -67,6 +81,7 @@ export function DocumentsPage() {
       setShowUpload(false)
       setFile(null)
       setDocType("other")
+      load(searchQuery, typeFilter)
     } catch (err: any) {
       toast.error(err.detail || "Error al subir")
     } finally {
@@ -81,8 +96,17 @@ export function DocumentsPage() {
       setDocuments((prev) => prev.filter((d) => d.id !== deleteDoc.id))
       toast.success("Documento eliminado")
       setDeleteDoc(null)
+      load(searchQuery, typeFilter)
     } catch (err: any) {
       toast.error(err.detail || "Error al eliminar")
+    }
+  }
+
+  const handleDownload = async (doc: MedicalDocumentOut) => {
+    try {
+      await medicalHistoryApi.documents.download(doc.id)
+    } catch (err: any) {
+      toast.error(err.detail || "Error al descargar")
     }
   }
 
@@ -98,7 +122,7 @@ export function DocumentsPage() {
   const docTypeLabel = (t: string) => docTypes.find((d) => d.value === t)?.label || t
 
   if (!canRead) return <div className="flex h-64 items-center justify-center text-muted-foreground">No tienes permisos</div>
-  if (loading) return <div className="flex h-64 items-center justify-center"><div className="size-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>
+  if (initialLoading) return <div className="flex h-64 items-center justify-center"><div className="size-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>
 
   return (
     <div className="space-y-4">
@@ -114,6 +138,27 @@ export function DocumentsPage() {
         )}
       </div>
 
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative flex-1">
+          <RiSearchLine className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por nombre..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v === "__all__" ? "" : v)}>
+          <SelectTrigger className="w-full sm:w-52">
+            <SelectValue placeholder="Todos los tipos" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Todos los tipos</SelectItem>
+            {docTypes.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+
       <div className="rounded-lg border">
         <Table>
           <TableHeader>
@@ -122,12 +167,18 @@ export function DocumentsPage() {
               <TableHead>Tipo</TableHead>
               <TableHead>Tamano</TableHead>
               <TableHead>Fecha</TableHead>
-              {canDelete && <TableHead className="w-10" />}
+              {canRead || canDelete ? <TableHead className="w-10" /> : null}
             </TableRow>
           </TableHeader>
           <TableBody>
-            {documents.length === 0 ? (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">No hay documentos</TableCell></TableRow>
+            {loading ? (
+              <TableRow><TableCell colSpan={5} className="py-6 text-center text-muted-foreground">
+                <div className="size-5 mx-auto animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              </TableCell></TableRow>
+            ) : documents.length === 0 ? (
+              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">
+                {searchQuery || typeFilter ? "Sin resultados para los filtros aplicados" : "No hay documentos"}
+              </TableCell></TableRow>
             ) : (
               documents.map((doc) => (
                 <TableRow key={doc.id}>
@@ -140,16 +191,21 @@ export function DocumentsPage() {
                   <TableCell><Badge variant="outline">{docTypeLabel(doc.doc_type)}</Badge></TableCell>
                   <TableCell className="text-sm">{formatSize(doc.file_size)}</TableCell>
                   <TableCell className="text-sm">{formatDate(doc.created_at)}</TableCell>
-                  {canDelete && (
+                  {(canRead || canDelete) && (
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon-xs"><RiMoreLine className="size-4" /></Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setDeleteDoc(doc)} className="text-destructive">
-                            <RiDeleteBinLine className="mr-2 size-4" />Eliminar
+                          <DropdownMenuItem onClick={() => handleDownload(doc)}>
+                            <RiDownloadLine className="mr-2 size-4" />Descargar
                           </DropdownMenuItem>
+                          {canDelete && (
+                            <DropdownMenuItem onClick={() => setDeleteDoc(doc)} className="text-destructive">
+                              <RiDeleteBinLine className="mr-2 size-4" />Eliminar
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

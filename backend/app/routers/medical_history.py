@@ -1,6 +1,16 @@
 from datetime import datetime, timezone, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Query,
+    Request,
+    UploadFile,
+    File,
+    status,
+)
+from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -701,13 +711,19 @@ def delete_prescription_detail(
     response_model=list[MedicalDocumentOut],
     dependencies=[Depends(require_permissions("medical_history:read"))],
 )
-def list_documents(current_user: CurrentUser, db: Session = Depends(get_db)):
-    result = db.execute(
-        select(MedicalDocument)
-        .where(MedicalDocument.user_id == current_user.id)
-        .order_by(MedicalDocument.created_at.desc())
-    )
-    return result.scalars().all()
+def list_documents(
+    current_user: CurrentUser,
+    db: Session = Depends(get_db),
+    search: str | None = Query(None),
+    doc_type: str | None = Query(None),
+):
+    query = select(MedicalDocument).where(MedicalDocument.user_id == current_user.id)
+    if search:
+        query = query.where(MedicalDocument.filename.ilike(f"%{search}%"))
+    if doc_type:
+        query = query.where(MedicalDocument.doc_type == doc_type)
+    query = query.order_by(MedicalDocument.created_at.desc())
+    return db.execute(query).scalars().all()
 
 
 @router.post(
@@ -725,7 +741,7 @@ async def upload_document(
     db: Session = Depends(get_db),
 ):
     try:
-        filename, file_path = await save_upload(file, current_user.id)
+        _, file_path, file_size = await save_upload(file, current_user.id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -733,11 +749,11 @@ async def upload_document(
         user_id=current_user.id,
         prescription_id=prescription_id,
         appointment_id=appointment_id,
-        filename=filename,
+        filename=file.filename or "document",
         file_path=file_path,
         doc_type=doc_type,
         mime_type=file.content_type,
-        file_size=None,
+        file_size=file_size,
     )
     db.add(doc)
     db.flush()
@@ -763,6 +779,38 @@ def get_document(
     if not doc:
         raise HTTPException(status_code=404, detail="Documento no encontrado")
     return doc
+
+
+@router.get(
+    "/documents/{doc_id}/download",
+    dependencies=[Depends(require_permissions("medical_history:read"))],
+)
+def download_document(
+    doc_id: int,
+    current_user: CurrentUser,
+    db: Session = Depends(get_db),
+):
+    from pathlib import Path
+    import os
+
+    doc = db.execute(
+        select(MedicalDocument).where(
+            MedicalDocument.id == doc_id, MedicalDocument.user_id == current_user.id
+        )
+    ).scalar_one_or_none()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Documento no encontrado")
+
+    base_dir = Path(os.getcwd())
+    file_path = (base_dir / doc.file_path).resolve()
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Archivo no encontrado en disco")
+
+    return FileResponse(
+        path=str(file_path),
+        filename=doc.filename,
+        media_type=doc.mime_type or "application/octet-stream",
+    )
 
 
 @router.delete(
