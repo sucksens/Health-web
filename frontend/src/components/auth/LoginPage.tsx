@@ -44,7 +44,7 @@ export function LoginPage() {
     <div className="flex min-h-svh items-center justify-center p-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">GastosApp</CardTitle>
+          <CardTitle className="text-2xl">Health</CardTitle>
           <CardDescription>
             Ingresa tus credenciales para continuar
           </CardDescription>

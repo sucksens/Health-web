@@ -13,7 +13,7 @@ _INSECURE_SECRETS = {
 
 
 class Settings(BaseSettings):
-    DATABASE_URL: str = "sqlite:///./gastos.db"
+    DATABASE_URL: str = "sqlite:///./health.db"
     JWT_SECRET_KEY: str = "change-this-secret-in-production"
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 15

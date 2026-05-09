@@ -56,7 +56,7 @@ Las migraciones usan tipos genericos de SQLAlchemy (`Integer`, `String`, `DateTi
 1. Configurar `.env`:
 
 ```env
-DATABASE_URL=sqlite:///./gastos.db
+DATABASE_URL=sqlite:///./health.db
 ```
 
 2. Crear las tablas y poblar datos:
@@ -76,20 +76,20 @@ python -c "from app.database.db import init_db, SessionLocal; init_db(); from ap
 uvicorn app.main:app --reload
 ```
 
-El archivo `gastos.db` se crea en la raiz de `backend/`.
+El archivo `health.db` se crea en la raiz de `backend/`.
 
 ### Usar MySQL (produccion)
 
 1. Configurar `.env`:
 
 ```env
-DATABASE_URL=mysql+pymysql://usuario:password@host:3306/gastos_db
+DATABASE_URL=mysql+pymysql://usuario:password@host:3306/health_db
 ```
 
 2. Asegurar que la base de datos exista en MySQL:
 
 ```sql
-CREATE DATABASE IF NOT EXISTS gastos_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS health_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
 3. Aplicar migraciones y poblar:
@@ -134,9 +134,9 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 El script `app/database/seed.py` inserta de forma idempotente:
 
 - **3 roles**: `admin`, `manager`, `user`
-- **17 permisos** organizados por modulo (`users`, `roles`, `permissions`, `expenses`, `reports`, `activity`)
-- **Asignaciones rol-permiso**: admin tiene todos, manager tiene gastos + reportes + lectura de usuarios, user tiene lectura y creacion de gastos
-- **1 usuario admin**: `admin@gastos.com` / `admin123` con rol admin
+- **Permisos** organizados por modulo (`users`, `roles`, `permissions`, `reports`, `activity`, `body_metrics`, `weight_goals`, `medical_history`)
+- **Asignaciones rol-permiso**: admin tiene todos, manager tiene reportes + lectura de usuarios, user tiene lectura y creacion
+- **1 usuario admin**: `admin@health.com` / `admin123` con rol admin
 
 El seed es seguro para ejecutarse multiples veces (verifica existencia antes de insertar).
 

@@ -27,10 +27,6 @@ _PERMISSIONS = [
     ("roles:delete", "Eliminar roles", "roles"),
     ("permissions:create", "Crear permisos", "permissions"),
     ("permissions:read", "Leer permisos", "permissions"),
-    ("expenses:create", "Crear gastos", "expenses"),
-    ("expenses:read", "Leer gastos", "expenses"),
-    ("expenses:update", "Actualizar gastos", "expenses"),
-    ("expenses:delete", "Eliminar gastos", "expenses"),
     ("reports:read", "Leer reportes", "reports"),
     ("activity:read", "Leer registro de auditoria", "activity"),
     ("body_metrics:create", "Crear mediciones corporales", "body_metrics"),
@@ -49,10 +45,6 @@ _PERMISSIONS = [
 
 _ADMIN_PERMISSIONS = {p[0] for p in _PERMISSIONS}
 _MANAGER_PERMISSIONS = {
-    "expenses:create",
-    "expenses:read",
-    "expenses:update",
-    "expenses:delete",
     "reports:read",
     "users:read",
     "body_metrics:create",
@@ -69,8 +61,6 @@ _MANAGER_PERMISSIONS = {
     "medical_history:delete",
 }
 _USER_PERMISSIONS = {
-    "expenses:read",
-    "expenses:create",
     "body_metrics:create",
     "body_metrics:read",
     "body_metrics:update",
@@ -92,7 +82,7 @@ _ROLE_PERMISSIONS = {
 }
 
 _ADMIN_USER = {
-    "email": "admin@gastos.com",
+    "email": "admin@health.com",
     "username": "admin",
     "password": "admin123",
 }
