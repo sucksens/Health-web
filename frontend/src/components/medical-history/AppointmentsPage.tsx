@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useMemo } from "react"
 import { useAuth } from "@/lib/auth"
 import { medicalHistoryApi } from "@/lib/api"
 import type { AppointmentOut, DoctorOut } from "@/lib/types"
@@ -20,6 +20,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { RiAddLine, RiMoreLine, RiPencilLine, RiDeleteBinLine } from "@remixicon/react"
 import { toast } from "sonner"
+import { CalendarView } from "./CalendarView"
 
 const statusColors: Record<string, string> = {
   pending: "bg-yellow-500",
@@ -42,6 +43,12 @@ export function AppointmentsPage() {
   const [appointments, setAppointments] = useState<AppointmentOut[]>([])
   const [doctors, setDoctors] = useState<DoctorOut[]>([])
   const [loading, setLoading] = useState(true)
+
+  const now = useMemo(() => new Date(), [])
+  const [selectedMonth, setSelectedMonth] = useState(
+    new Date(now.getFullYear(), now.getMonth(), 1),
+  )
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
 
   const canRead = hasPermission("medical_history:read")
   const canCreate = hasPermission("medical_history:create")
@@ -137,6 +144,36 @@ export function AppointmentsPage() {
 
   const getDoctorName = (id: number) => doctors.find((d) => d.id === id)?.name || "Doctor"
 
+  const filteredAppointments = useMemo(() => {
+    const m = selectedMonth.getMonth()
+    const y = selectedMonth.getFullYear()
+    let filtered = appointments.filter((a) => {
+      const d = new Date(a.date_time)
+      if (selectedDate) {
+        return (
+          d.getFullYear() === selectedDate.getFullYear() &&
+          d.getMonth() === selectedDate.getMonth() &&
+          d.getDate() === selectedDate.getDate()
+        )
+      }
+      return d.getFullYear() === y && d.getMonth() === m
+    })
+    filtered = [...filtered].sort(
+      (a, b) => new Date(a.date_time).getTime() - new Date(b.date_time).getTime(),
+    )
+    return filtered
+  }, [appointments, selectedMonth, selectedDate])
+
+  const handleMonthChange = (date: Date) => {
+    setSelectedMonth(date)
+    setSelectedDate(null)
+  }
+
+  const monthLabel = selectedMonth.toLocaleDateString("es-MX", {
+    month: "long",
+    year: "numeric",
+  })
+
   const formFields = (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -169,11 +206,28 @@ export function AppointmentsPage() {
   if (loading) return <div className="flex h-64 items-center justify-center"><div className="size-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Citas</h1>
-          <p className="text-sm text-muted-foreground">Gestion de citas medicas</p>
+          <p className="text-sm text-muted-foreground">
+            Gestion de citas medicas —{" "}
+            <span className="capitalize font-medium">{monthLabel}</span>
+            {selectedDate && (
+              <span className="text-muted-foreground">
+                {" "}
+                · {selectedDate.toLocaleDateString("es-MX", { day: "numeric", month: "short" })}
+                <Button
+                  variant="link"
+                  size="xs"
+                  className="ml-1 h-auto p-0 text-xs"
+                  onClick={() => setSelectedDate(null)}
+                >
+                  Ver todo el mes
+                </Button>
+              </span>
+            )}
+          </p>
         </div>
         {canCreate && <Button onClick={openCreate}><RiAddLine className="mr-2 size-4" />Nueva cita</Button>}
       </div>
@@ -191,10 +245,10 @@ export function AppointmentsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {appointments.length === 0 ? (
-              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">No hay citas</TableCell></TableRow>
+            {filteredAppointments.length === 0 ? (
+              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">No hay citas{selectedDate ? " en este día" : " en este mes"}</TableCell></TableRow>
             ) : (
-              appointments.map((a) => (
+              filteredAppointments.map((a) => (
                 <TableRow key={a.id}>
                   <TableCell className="text-sm">{formatDate(a.date_time)}</TableCell>
                   <TableCell className="font-medium">{getDoctorName(a.doctor_id)}</TableCell>
@@ -232,6 +286,15 @@ export function AppointmentsPage() {
           </TableBody>
         </Table>
       </div>
+
+      <CalendarView
+        appointments={appointments}
+        doctors={doctors}
+        selectedMonth={selectedMonth}
+        selectedDate={selectedDate}
+        onMonthChange={handleMonthChange}
+        onDayClick={setSelectedDate}
+      />
 
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
         <DialogContent>

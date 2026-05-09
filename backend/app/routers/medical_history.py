@@ -277,15 +277,17 @@ def list_appointments(
     current_user: CurrentUser,
     skip: int = 0,
     limit: int = 50,
+    date_from: str | None = None,
+    date_to: str | None = None,
     db: Session = Depends(get_db),
 ):
-    result = db.execute(
-        select(Appointment)
-        .where(Appointment.user_id == current_user.id)
-        .order_by(Appointment.date_time.desc())
-        .offset(skip)
-        .limit(limit)
-    )
+    query = select(Appointment).where(Appointment.user_id == current_user.id)
+    if date_from:
+        query = query.where(Appointment.date_time >= date_from)
+    if date_to:
+        query = query.where(Appointment.date_time <= date_to)
+    query = query.order_by(Appointment.date_time.asc()).offset(skip).limit(limit)
+    result = db.execute(query)
     return result.scalars().all()
 
 
