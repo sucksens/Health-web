@@ -13,6 +13,16 @@ import { ProfilePage } from "@/components/profile/ProfilePage"
 import { BodyMetricsPage } from "@/components/body-metrics/BodyMetricsPage"
 import { WeightGoalHistoryPage } from "@/components/body-metrics/WeightGoalHistoryPage"
 import { ForcePasswordChangePage } from "@/components/auth/ForcePasswordChangePage"
+import { MedicalHistoryHome } from "@/components/medical-history/MedicalHistoryHome"
+import { PatientProfileForm } from "@/components/medical-history/PatientProfileForm"
+import { DoctorsPage } from "@/components/medical-history/DoctorsPage"
+import { SpecialtiesPage } from "@/components/medical-history/SpecialtiesPage"
+import { MedicationCatalog } from "@/components/medical-history/MedicationCatalog"
+import { AppointmentsPage } from "@/components/medical-history/AppointmentsPage"
+import { PrescriptionsPage } from "@/components/medical-history/PrescriptionsPage"
+import { PrescriptionForm } from "@/components/medical-history/PrescriptionForm"
+import { DocumentsPage } from "@/components/medical-history/DocumentsPage"
+import { AdherenceTracker } from "@/components/medical-history/AdherenceTracker"
 import { AppSidebar } from "@/components/app-sidebar"
 import {
   SidebarProvider,
@@ -32,6 +42,16 @@ const routeLabels: Record<string, string> = {
   "/body-metrics": "Medidas Corporales",
   "/body-metrics/goals": "Historial de Metas",
   "/force-password-change": "Cambiar contrasena",
+  "/medical-history": "Historial Medico",
+  "/medical-history/profile": "Perfil de Salud",
+  "/medical-history/doctors": "Doctores",
+  "/medical-history/specialties": "Especialidades",
+  "/medical-history/appointments": "Citas",
+  "/medical-history/prescriptions": "Recetas",
+  "/medical-history/prescriptions/new": "Nueva Receta",
+  "/medical-history/medications": "Medicamentos",
+  "/medical-history/documents": "Documentos",
+  "/medical-history/adherence": "Tratamiento Activo",
 }
 
 function DashboardShell({ children }: { children: React.ReactNode }) {
@@ -115,6 +135,16 @@ function RouteGuard() {
       {currentPath === "/profile" && <ProfilePage />}
       {currentPath === "/body-metrics" && <BodyMetricsPage />}
       {currentPath === "/body-metrics/goals" && <WeightGoalHistoryPage />}
+      {currentPath === "/medical-history" && <MedicalHistoryHome />}
+      {currentPath === "/medical-history/profile" && <PatientProfileForm />}
+      {currentPath === "/medical-history/doctors" && <DoctorsPage />}
+      {currentPath === "/medical-history/specialties" && <SpecialtiesPage />}
+      {currentPath === "/medical-history/medications" && <MedicationCatalog />}
+      {currentPath === "/medical-history/appointments" && <AppointmentsPage />}
+      {currentPath === "/medical-history/prescriptions" && <PrescriptionsPage />}
+      {currentPath === "/medical-history/prescriptions/new" && <PrescriptionForm />}
+      {currentPath === "/medical-history/documents" && <DocumentsPage />}
+      {currentPath === "/medical-history/adherence" && <AdherenceTracker />}
     </DashboardShell>
   )
 }

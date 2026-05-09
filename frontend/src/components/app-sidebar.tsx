@@ -13,7 +13,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import { RiWallet3Line, RiUser3Line, RiShieldLine, RiKey2Line, RiFileList2Line, RiUserSettingsLine, RiBodyScanLine } from "@remixicon/react"
+import { RiWallet3Line, RiUser3Line, RiShieldLine, RiKey2Line, RiFileList2Line, RiUserSettingsLine, RiBodyScanLine, RiHeart2Line } from "@remixicon/react"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user, hasPermission } = useAuth()
@@ -23,6 +23,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const hasPermissions = hasPermission("permissions:read")
   const hasActivity = hasPermission("activity:read")
   const hasBodyMetrics = hasPermission("body_metrics:read")
+  const hasMedicalHistory = hasPermission("medical_history:read")
 
   const adminItems = [
     ...(hasUsers
@@ -83,6 +84,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             items: [
               { title: "Historial de medidas", url: "/body-metrics" },
               { title: "Historial de metas", url: "/body-metrics/goals" },
+            ],
+          },
+        ]
+      : []),
+    ...(hasMedicalHistory
+      ? [
+          {
+            title: "Historial Medico",
+            url: "/medical-history",
+            icon: <RiHeart2Line />,
+            items: [
+              { title: "Inicio", url: "/medical-history" },
+              { title: "Doctores", url: "/medical-history/doctors" },
+              { title: "Especialidades", url: "/medical-history/specialties" },
+              { title: "Citas", url: "/medical-history/appointments" },
+              { title: "Recetas", url: "/medical-history/prescriptions" },
+              { title: "Medicamentos", url: "/medical-history/medications" },
+              { title: "Documentos", url: "/medical-history/documents" },
+              { title: "Tratamiento Activo", url: "/medical-history/adherence" },
             ],
           },
         ]

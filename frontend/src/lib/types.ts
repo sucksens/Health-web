@@ -202,3 +202,240 @@ export interface WeightGoalDetailResponse {
   goal: WeightGoalWithProgress
   metrics: BodyMetricOut[]
 }
+
+// ── Medical History ──────────────────────────────────────────────────────────
+
+export interface PatientProfileOut {
+  id: number
+  user_id: number
+  date_of_birth: string | null
+  allergies: string | null
+  chronic_conditions: string | null
+  blood_type: string | null
+  emergency_contact_name: string | null
+  emergency_contact_phone: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface PatientProfileUpdate {
+  date_of_birth?: string | null
+  allergies?: string | null
+  chronic_conditions?: string | null
+  blood_type?: string | null
+  emergency_contact_name?: string | null
+  emergency_contact_phone?: string | null
+}
+
+export interface SpecialtyOut {
+  id: number
+  user_id: number
+  name: string
+  created_at: string
+}
+
+export interface SpecialtyCreate {
+  name: string
+}
+
+export interface SpecialtyUpdate {
+  name?: string
+}
+
+export interface DoctorOut {
+  id: number
+  user_id: number
+  name: string
+  specialty_id: number | null
+  license_number: string | null
+  phone: string | null
+  email: string | null
+  address: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface DoctorCreate {
+  name: string
+  specialty_id?: number | null
+  license_number?: string | null
+  phone?: string | null
+  email?: string | null
+  address?: string | null
+  notes?: string | null
+}
+
+export interface DoctorUpdate {
+  name?: string
+  specialty_id?: number | null
+  license_number?: string | null
+  phone?: string | null
+  email?: string | null
+  address?: string | null
+  notes?: string | null
+}
+
+export interface AppointmentOut {
+  id: number
+  user_id: number
+  doctor_id: number
+  date_time: string
+  reason: string | null
+  location: string | null
+  status: string
+  post_notes: string | null
+  requires_followup: boolean
+  followup_date: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface AppointmentCreate {
+  doctor_id: number
+  date_time: string
+  reason?: string | null
+  location?: string | null
+}
+
+export interface AppointmentUpdate {
+  doctor_id?: number
+  date_time?: string
+  reason?: string | null
+  location?: string | null
+  status?: string
+  post_notes?: string | null
+  requires_followup?: boolean
+  followup_date?: string | null
+}
+
+export interface MedicationOut {
+  id: number
+  user_id: number
+  generic_name: string
+  brand_name: string | null
+  presentation: string | null
+  concentration: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface MedicationCreate {
+  generic_name: string
+  brand_name?: string | null
+  presentation?: string | null
+  concentration?: string | null
+  notes?: string | null
+}
+
+export interface MedicationUpdate {
+  generic_name?: string
+  brand_name?: string | null
+  presentation?: string | null
+  concentration?: string | null
+  notes?: string | null
+}
+
+export interface PrescriptionDetailOut {
+  id: number
+  prescription_id: number
+  medication_id: number | null
+  medication_name: string
+  dosage: string | null
+  frequency: string | null
+  duration_days: number | null
+  start_date: string | null
+  end_date: string | null
+  instructions: string | null
+  status: string
+  scheduled_times: string[] | null
+  created_at: string
+}
+
+export interface PrescriptionDetailCreate {
+  medication_id?: number | null
+  medication_name: string
+  dosage?: string | null
+  frequency?: string | null
+  duration_days?: number | null
+  start_date?: string | null
+  end_date?: string | null
+  instructions?: string | null
+  scheduled_times?: string[] | null
+}
+
+export interface PrescriptionDetailUpdate {
+  dosage?: string | null
+  frequency?: string | null
+  duration_days?: number | null
+  start_date?: string | null
+  end_date?: string | null
+  instructions?: string | null
+  status?: string
+  scheduled_times?: string[] | null
+}
+
+export interface PrescriptionOut {
+  id: number
+  user_id: number
+  appointment_id: number | null
+  doctor_id: number
+  diagnosis: string | null
+  issue_date: string
+  valid_until: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+  details: PrescriptionDetailOut[]
+}
+
+export interface PrescriptionCreate {
+  appointment_id?: number | null
+  doctor_id: number
+  diagnosis?: string | null
+  valid_until?: string | null
+  notes?: string | null
+  details?: PrescriptionDetailCreate[]
+}
+
+export interface PrescriptionUpdate {
+  diagnosis?: string | null
+  valid_until?: string | null
+  notes?: string | null
+}
+
+export interface MedicalDocumentOut {
+  id: number
+  user_id: number
+  prescription_id: number | null
+  appointment_id: number | null
+  filename: string
+  doc_type: string
+  mime_type: string | null
+  file_size: number | null
+  created_at: string
+}
+
+export interface AdherenceRecordOut {
+  id: number
+  prescription_detail_id: number
+  scheduled_time: string
+  taken_at: string | null
+  status: string
+  notes: string | null
+  created_at: string
+  medication_name: string | null
+}
+
+export interface AdherenceRecordCreate {
+  prescription_detail_id: number
+  scheduled_time: string
+  notes?: string | null
+}
+
+export interface AdherenceRecordUpdate {
+  status?: string
+  notes?: string | null
+  scheduled_time?: string
+}

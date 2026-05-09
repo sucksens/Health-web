@@ -24,6 +24,30 @@ import type {
   WeightGoalCreate,
   WeightGoalUpdate,
   WeightGoalDetailResponse,
+  PatientProfileOut,
+  PatientProfileUpdate,
+  SpecialtyOut,
+  SpecialtyCreate,
+  SpecialtyUpdate,
+  DoctorOut,
+  DoctorCreate,
+  DoctorUpdate,
+  AppointmentOut,
+  AppointmentCreate,
+  AppointmentUpdate,
+  MedicationOut,
+  MedicationCreate,
+  MedicationUpdate,
+  PrescriptionOut,
+  PrescriptionCreate,
+  PrescriptionUpdate,
+  PrescriptionDetailOut,
+  PrescriptionDetailCreate,
+  PrescriptionDetailUpdate,
+  MedicalDocumentOut,
+  AdherenceRecordOut,
+  AdherenceRecordCreate,
+  AdherenceRecordUpdate,
 } from "./types"
 
 const API_BASE = import.meta.env.API_URL || "http://localhost:8000/api/v1"
@@ -389,6 +413,202 @@ export const weightGoalsApi = {
 
   delete: async (id: number): Promise<void> => {
     return request(`/weight-goals/${id}`, { method: "DELETE" })
+  },
+}
+
+export const medicalHistoryApi = {
+  profile: {
+    get: async (): Promise<PatientProfileOut | null> => {
+      return request<PatientProfileOut | null>("/medical-history/profile")
+    },
+    upsert: async (body: PatientProfileUpdate): Promise<PatientProfileOut> => {
+      return request<PatientProfileOut>("/medical-history/profile", {
+        method: "PUT",
+        body: JSON.stringify(body),
+      })
+    },
+  },
+
+  specialties: {
+    list: async (): Promise<SpecialtyOut[]> => {
+      return request<SpecialtyOut[]>("/medical-history/specialties")
+    },
+    create: async (body: SpecialtyCreate): Promise<SpecialtyOut> => {
+      return request<SpecialtyOut>("/medical-history/specialties", {
+        method: "POST",
+        body: JSON.stringify(body),
+      })
+    },
+    update: async (id: number, body: SpecialtyUpdate): Promise<SpecialtyOut> => {
+      return request<SpecialtyOut>(`/medical-history/specialties/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      })
+    },
+    delete: async (id: number): Promise<void> => {
+      return request(`/medical-history/specialties/${id}`, { method: "DELETE" })
+    },
+  },
+
+  doctors: {
+    list: async (): Promise<DoctorOut[]> => {
+      return request<DoctorOut[]>("/medical-history/doctors")
+    },
+    get: async (id: number): Promise<DoctorOut> => {
+      return request<DoctorOut>(`/medical-history/doctors/${id}`)
+    },
+    create: async (body: DoctorCreate): Promise<DoctorOut> => {
+      return request<DoctorOut>("/medical-history/doctors", {
+        method: "POST",
+        body: JSON.stringify(body),
+      })
+    },
+    update: async (id: number, body: DoctorUpdate): Promise<DoctorOut> => {
+      return request<DoctorOut>(`/medical-history/doctors/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      })
+    },
+    delete: async (id: number): Promise<void> => {
+      return request(`/medical-history/doctors/${id}`, { method: "DELETE" })
+    },
+  },
+
+  appointments: {
+    list: async (skip = 0, limit = 50): Promise<AppointmentOut[]> => {
+      return request<AppointmentOut[]>(`/medical-history/appointments?skip=${skip}&limit=${limit}`)
+    },
+    get: async (id: number): Promise<AppointmentOut> => {
+      return request<AppointmentOut>(`/medical-history/appointments/${id}`)
+    },
+    create: async (body: AppointmentCreate): Promise<AppointmentOut> => {
+      return request<AppointmentOut>("/medical-history/appointments", {
+        method: "POST",
+        body: JSON.stringify(body),
+      })
+    },
+    update: async (id: number, body: AppointmentUpdate): Promise<AppointmentOut> => {
+      return request<AppointmentOut>(`/medical-history/appointments/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      })
+    },
+    delete: async (id: number): Promise<void> => {
+      return request(`/medical-history/appointments/${id}`, { method: "DELETE" })
+    },
+  },
+
+  medications: {
+    list: async (): Promise<MedicationOut[]> => {
+      return request<MedicationOut[]>("/medical-history/medications")
+    },
+    create: async (body: MedicationCreate): Promise<MedicationOut> => {
+      return request<MedicationOut>("/medical-history/medications", {
+        method: "POST",
+        body: JSON.stringify(body),
+      })
+    },
+    update: async (id: number, body: MedicationUpdate): Promise<MedicationOut> => {
+      return request<MedicationOut>(`/medical-history/medications/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      })
+    },
+    delete: async (id: number): Promise<void> => {
+      return request(`/medical-history/medications/${id}`, { method: "DELETE" })
+    },
+  },
+
+  prescriptions: {
+    list: async (skip = 0, limit = 50): Promise<PrescriptionOut[]> => {
+      return request<PrescriptionOut[]>(`/medical-history/prescriptions?skip=${skip}&limit=${limit}`)
+    },
+    get: async (id: number): Promise<PrescriptionOut> => {
+      return request<PrescriptionOut>(`/medical-history/prescriptions/${id}`)
+    },
+    create: async (body: PrescriptionCreate): Promise<PrescriptionOut> => {
+      return request<PrescriptionOut>("/medical-history/prescriptions", {
+        method: "POST",
+        body: JSON.stringify(body),
+      })
+    },
+    update: async (id: number, body: PrescriptionUpdate): Promise<PrescriptionOut> => {
+      return request<PrescriptionOut>(`/medical-history/prescriptions/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      })
+    },
+    delete: async (id: number): Promise<void> => {
+      return request(`/medical-history/prescriptions/${id}`, { method: "DELETE" })
+    },
+    addDetail: async (rxId: number, body: PrescriptionDetailCreate): Promise<PrescriptionDetailOut> => {
+      return request<PrescriptionDetailOut>(`/medical-history/prescriptions/${rxId}/details`, {
+        method: "POST",
+        body: JSON.stringify(body),
+      })
+    },
+    updateDetail: async (rxId: number, detId: number, body: PrescriptionDetailUpdate): Promise<PrescriptionDetailOut> => {
+      return request<PrescriptionDetailOut>(`/medical-history/prescriptions/${rxId}/details/${detId}`, {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      })
+    },
+    deleteDetail: async (rxId: number, detId: number): Promise<void> => {
+      return request(`/medical-history/prescriptions/${rxId}/details/${detId}`, { method: "DELETE" })
+    },
+  },
+
+  documents: {
+    list: async (): Promise<MedicalDocumentOut[]> => {
+      return request<MedicalDocumentOut[]>("/medical-history/documents")
+    },
+    get: async (id: number): Promise<MedicalDocumentOut> => {
+      return request<MedicalDocumentOut>(`/medical-history/documents/${id}`)
+    },
+    upload: async (file: File, docType: string, prescriptionId?: number, appointmentId?: number): Promise<MedicalDocumentOut> => {
+      const token = getAccessToken()
+      const formData = new FormData()
+      formData.append("file", file)
+      const params = new URLSearchParams()
+      params.set("doc_type", docType)
+      if (prescriptionId) params.set("prescription_id", String(prescriptionId))
+      if (appointmentId) params.set("appointment_id", String(appointmentId))
+      const res = await fetch(`${API_BASE}/medical-history/documents/upload?${params}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      })
+      if (!res.ok) {
+        let detail = "Error al subir archivo"
+        try { const b = await res.json(); detail = b.detail || detail } catch {}
+        throw new ApiError(res.status, detail)
+      }
+      return res.json()
+    },
+    delete: async (id: number): Promise<void> => {
+      return request(`/medical-history/documents/${id}`, { method: "DELETE" })
+    },
+  },
+
+  adherence: {
+    today: async (): Promise<AdherenceRecordOut[]> => {
+      return request<AdherenceRecordOut[]>("/medical-history/adherence/today")
+    },
+    history: async (skip = 0, limit = 100): Promise<AdherenceRecordOut[]> => {
+      return request<AdherenceRecordOut[]>(`/medical-history/adherence/history?skip=${skip}&limit=${limit}`)
+    },
+    create: async (body: AdherenceRecordCreate): Promise<AdherenceRecordOut> => {
+      return request<AdherenceRecordOut>("/medical-history/adherence", {
+        method: "POST",
+        body: JSON.stringify(body),
+      })
+    },
+    update: async (id: number, body: AdherenceRecordUpdate): Promise<AdherenceRecordOut> => {
+      return request<AdherenceRecordOut>(`/medical-history/adherence/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      })
+    },
   },
 }
 
