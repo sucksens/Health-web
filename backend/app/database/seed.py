@@ -41,6 +41,10 @@ _PERMISSIONS = [
     ("weight_goals:read", "Leer metas de peso", "weight_goals"),
     ("weight_goals:update", "Actualizar metas de peso", "weight_goals"),
     ("weight_goals:delete", "Eliminar metas de peso", "weight_goals"),
+    ("medical_history:create", "Crear registros medicos", "medical_history"),
+    ("medical_history:read", "Leer registros medicos", "medical_history"),
+    ("medical_history:update", "Actualizar registros medicos", "medical_history"),
+    ("medical_history:delete", "Eliminar registros medicos", "medical_history"),
 ]
 
 _ADMIN_PERMISSIONS = {p[0] for p in _PERMISSIONS}
@@ -59,6 +63,10 @@ _MANAGER_PERMISSIONS = {
     "weight_goals:read",
     "weight_goals:update",
     "weight_goals:delete",
+    "medical_history:create",
+    "medical_history:read",
+    "medical_history:update",
+    "medical_history:delete",
 }
 _USER_PERMISSIONS = {
     "expenses:read",
@@ -71,6 +79,10 @@ _USER_PERMISSIONS = {
     "weight_goals:read",
     "weight_goals:update",
     "weight_goals:delete",
+    "medical_history:create",
+    "medical_history:read",
+    "medical_history:update",
+    "medical_history:delete",
 }
 
 _ROLE_PERMISSIONS = {

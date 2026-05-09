@@ -6,6 +6,17 @@ from app.models.permission import Permission
 from app.models.associations import UserRole, RolePermission
 from app.models.refresh_token import RefreshToken
 from app.models.weight_goal import WeightGoal
+from app.models.medical_history import (
+    PatientProfile,
+    Specialty,
+    Doctor,
+    Appointment,
+    Prescription,
+    Medication,
+    PrescriptionDetail,
+    MedicalDocument,
+    AdherenceRecord,
+)
 
 __all__ = [
     "ActivityLog",
@@ -17,4 +28,13 @@ __all__ = [
     "RolePermission",
     "RefreshToken",
     "WeightGoal",
+    "PatientProfile",
+    "Specialty",
+    "Doctor",
+    "Appointment",
+    "Prescription",
+    "Medication",
+    "PrescriptionDetail",
+    "MedicalDocument",
+    "AdherenceRecord",
 ]

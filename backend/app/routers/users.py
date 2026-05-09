@@ -18,6 +18,7 @@ from app.schemas.user import (
     UserUpdate,
 )
 from app.services import log_activity
+from app.config.tz import now_mx
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -132,7 +133,7 @@ def update_user(
                 RefreshToken.user_id == user_id,
                 RefreshToken.revoked_at.is_(None),
             )
-            .values(revoked_at=datetime.now(timezone.utc))
+            .values(revoked_at=now_mx())
         )
 
     if "must_change_password" in changes:
@@ -252,7 +253,7 @@ def list_sessions(user_id: int, db: Session = Depends(get_db)):
         .all()
     )
 
-    now = datetime.now(timezone.utc)
+    now = now_mx()
     return [
         SessionOut(
             id=t.id,
@@ -287,7 +288,7 @@ def invalidate_sessions(user_id: int, request: Request, db: Session = Depends(ge
             RefreshToken.user_id == user_id,
             RefreshToken.revoked_at.is_(None),
         )
-        .values(revoked_at=datetime.now(timezone.utc))
+        .values(revoked_at=now_mx())
     )
 
     log_activity(

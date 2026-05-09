@@ -6,6 +6,7 @@ from sqlalchemy import Integer, DateTime, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.db import Base
+from app.config.tz import now_mx
 
 
 class RefreshToken(Base):
@@ -18,7 +19,7 @@ class RefreshToken(Base):
     token_jti: Mapped[str] = mapped_column(String(36), unique=True, nullable=False)
     expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(timezone.utc)
+        DateTime, default=lambda: now_mx()
     )
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 

@@ -16,6 +16,7 @@ from app.schemas.weight_goal import (
     WeightGoalWithProgress,
 )
 from app.services import log_activity
+from app.config.tz import now_mx
 
 router = APIRouter(prefix="/weight-goals", tags=["Weight Goals"])
 
@@ -85,7 +86,7 @@ def get_active_goal(current_user: CurrentUser, db: Session = Depends(get_db)):
             goal.start_weight_kg,
             current_weight,
             goal.created_at,
-            datetime.now(timezone.utc),
+            now_mx(),
         )
 
     return WeightGoalWithProgress(
@@ -227,7 +228,7 @@ def get_goal_details(
     elif goal.status == "abandoned":
         end_date = goal.updated_at.replace(tzinfo=timezone.utc)
     else:
-        end_date = datetime.now(timezone.utc)
+        end_date = now_mx()
 
     metrics = (
         db.execute(
@@ -259,7 +260,7 @@ def get_goal_details(
     ]
 
     current_weight = _get_current_weight(db, current_user.id)
-    today = datetime.now(timezone.utc).date()
+    today = now_mx().date()
     days_remaining = max(0, (goal.target_date - today).days)
 
     progress = None
@@ -275,7 +276,7 @@ def get_goal_details(
             goal.start_weight_kg,
             current_weight,
             goal.created_at,
-            datetime.now(timezone.utc),
+            now_mx(),
         )
 
     return {
@@ -354,7 +355,7 @@ def achieve_goal(
         )
 
     goal.status = "achieved"
-    goal.achieved_at = datetime.now(timezone.utc)
+    goal.achieved_at = now_mx()
     db.flush()
     db.refresh(goal)
 

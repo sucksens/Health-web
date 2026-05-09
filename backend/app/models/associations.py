@@ -4,6 +4,7 @@ from sqlalchemy import Integer, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database.db import Base
+from app.config.tz import now_mx
 
 
 class UserRole(Base):
@@ -16,7 +17,7 @@ class UserRole(Base):
         Integer, ForeignKey("roles.id", ondelete="CASCADE"), primary_key=True
     )
     assigned_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(timezone.utc)
+        DateTime, default=lambda: now_mx()
     )
 
 
@@ -30,5 +31,5 @@ class RolePermission(Base):
         Integer, ForeignKey("permissions.id", ondelete="CASCADE"), primary_key=True
     )
     assigned_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(timezone.utc)
+        DateTime, default=lambda: now_mx()
     )

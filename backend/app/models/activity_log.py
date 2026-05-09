@@ -6,6 +6,7 @@ from sqlalchemy import Integer, DateTime, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.db import Base
+from app.config.tz import now_mx
 
 
 class ActivityLog(Base):
@@ -20,7 +21,7 @@ class ActivityLog(Base):
     ip_address: Mapped[str | None] = mapped_column(String(45), nullable=True)
     user_agent: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(timezone.utc)
+        DateTime, default=lambda: now_mx()
     )
 
     def __repr__(self) -> str:

@@ -6,6 +6,7 @@ from sqlalchemy import Integer, DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.db import Base
+from app.config.tz import now_mx
 
 
 class Permission(Base):
@@ -16,7 +17,7 @@ class Permission(Base):
     description: Mapped[str | None] = mapped_column(String(255), nullable=True)
     module: Mapped[str | None] = mapped_column(String(100), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(timezone.utc)
+        DateTime, default=lambda: now_mx()
     )
 
     roles: Mapped[list["Role"]] = relationship(

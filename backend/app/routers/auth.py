@@ -19,6 +19,7 @@ from app.schemas.user import (
     ForceChangePasswordRequest,
 )
 from app.services import log_activity
+from app.config.tz import now_mx
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -212,7 +213,7 @@ def refresh(
             detail="Usuario no valido",
         )
 
-    stored_token.revoked_at = datetime.now(timezone.utc)
+    stored_token.revoked_at = now_mx()
 
     return _build_tokens(user, db)
 
@@ -237,7 +238,7 @@ def logout(
     ).scalar_one_or_none()
 
     if stored_token and stored_token.revoked_at is None:
-        stored_token.revoked_at = datetime.now(timezone.utc)
+        stored_token.revoked_at = now_mx()
 
     if user_id:
         log_activity(
@@ -262,7 +263,7 @@ def logout_all(
             RefreshToken.user_id == current_user.id,
             RefreshToken.revoked_at.is_(None),
         )
-        .values(revoked_at=datetime.now(timezone.utc))
+        .values(revoked_at=now_mx())
     )
 
     log_activity(
@@ -313,7 +314,7 @@ def change_password(
             RefreshToken.user_id == current_user.id,
             RefreshToken.revoked_at.is_(None),
         )
-        .values(revoked_at=datetime.now(timezone.utc))
+        .values(revoked_at=now_mx())
     )
 
     log_activity(
@@ -356,7 +357,7 @@ def force_change_password(
             RefreshToken.user_id == current_user.id,
             RefreshToken.revoked_at.is_(None),
         )
-        .values(revoked_at=datetime.now(timezone.utc))
+        .values(revoked_at=now_mx())
     )
 
     log_activity(

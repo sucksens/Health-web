@@ -6,6 +6,7 @@ from sqlalchemy import Integer, DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.db import Base
+from app.config.tz import now_mx
 
 
 class Role(Base):
@@ -15,12 +16,12 @@ class Role(Base):
     name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     description: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(timezone.utc)
+        DateTime, default=lambda: now_mx()
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: now_mx(),
+        onupdate=lambda: now_mx(),
     )
 
     users: Mapped[list["User"]] = relationship(

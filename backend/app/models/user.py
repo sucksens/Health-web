@@ -6,6 +6,7 @@ from sqlalchemy import Float, Integer, DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.db import Base
+from app.config.tz import now_mx
 
 
 class User(Base):
@@ -23,12 +24,12 @@ class User(Base):
     must_change_password: Mapped[bool] = mapped_column(default=False, nullable=False)
     token_version: Mapped[int] = mapped_column(default=1, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(timezone.utc)
+        DateTime, default=lambda: now_mx()
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: now_mx(),
+        onupdate=lambda: now_mx(),
     )
 
     roles: Mapped[list["Role"]] = relationship(
@@ -41,6 +42,34 @@ class User(Base):
 
     weight_goals: Mapped[list["WeightGoal"]] = relationship(
         back_populates="user", lazy="select", order_by="WeightGoal.created_at.desc()"
+    )
+
+    patient_profile: Mapped["PatientProfile | None"] = relationship(
+        back_populates="user", uselist=False, lazy="select"
+    )
+
+    specialties: Mapped[list["Specialty"]] = relationship(
+        back_populates="user", lazy="select", cascade="all, delete-orphan"
+    )
+
+    doctors: Mapped[list["Doctor"]] = relationship(
+        back_populates="user", lazy="select", cascade="all, delete-orphan"
+    )
+
+    appointments: Mapped[list["Appointment"]] = relationship(
+        back_populates="user", lazy="select", cascade="all, delete-orphan"
+    )
+
+    prescriptions: Mapped[list["Prescription"]] = relationship(
+        back_populates="user", lazy="select", cascade="all, delete-orphan"
+    )
+
+    medications: Mapped[list["Medication"]] = relationship(
+        back_populates="user", lazy="select", cascade="all, delete-orphan"
+    )
+
+    medical_documents: Mapped[list["MedicalDocument"]] = relationship(
+        back_populates="user", lazy="select", cascade="all, delete-orphan"
     )
 
     def __repr__(self) -> str:

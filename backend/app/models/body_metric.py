@@ -6,6 +6,7 @@ from sqlalchemy import Float, Integer, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.db import Base
+from app.config.tz import now_mx
 
 
 class BodyMetric(Base):
@@ -21,10 +22,10 @@ class BodyMetric(Base):
     chest_cm: Mapped[float | None] = mapped_column(Float, nullable=True)
     arm_cm: Mapped[float | None] = mapped_column(Float, nullable=True)
     recorded_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(timezone.utc)
+        DateTime, default=lambda: now_mx()
     )
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(timezone.utc)
+        DateTime, default=lambda: now_mx()
     )
 
     user: Mapped["User"] = relationship(back_populates="body_metrics")
