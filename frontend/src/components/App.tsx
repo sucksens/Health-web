@@ -23,6 +23,7 @@ import { PrescriptionsPage } from "@/components/medical-history/PrescriptionsPag
 import { PrescriptionForm } from "@/components/medical-history/PrescriptionForm"
 import { DocumentsPage } from "@/components/medical-history/DocumentsPage"
 import { AdherenceTracker } from "@/components/medical-history/AdherenceTracker"
+import { ReportsPage } from "@/components/medical-history/ReportsPage"
 import { AppSidebar } from "@/components/app-sidebar"
 import {
   SidebarProvider,
@@ -52,6 +53,7 @@ const routeLabels: Record<string, string> = {
   "/medical-history/medications": "Medicamentos",
   "/medical-history/documents": "Documentos",
   "/medical-history/adherence": "Tratamiento Activo",
+  "/medical-history/reports": "Reportes",
 }
 
 function DashboardShell({ children }: { children: React.ReactNode }) {
@@ -145,6 +147,7 @@ function RouteGuard() {
       {currentPath === "/medical-history/prescriptions/new" && <PrescriptionForm />}
       {currentPath === "/medical-history/documents" && <DocumentsPage />}
       {currentPath === "/medical-history/adherence" && <AdherenceTracker />}
+      {currentPath === "/medical-history/reports" && <ReportsPage />}
     </DashboardShell>
   )
 }

@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "@/lib/router"
 import { useAuth } from "@/lib/auth"
 import { medicalHistoryApi } from "@/lib/api"
-import type { DoctorOut, MedicationOut, PrescriptionDetailCreate } from "@/lib/types"
+import type { DoctorOut, MedicationOut, PrescriptionOut, PrescriptionDetailCreate } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -12,7 +12,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select"
-import { RiAddLine, RiDeleteBinLine, RiArrowLeftLine, RiTimeLine } from "@remixicon/react"
+import { RiAddLine, RiDeleteBinLine, RiArrowLeftLine, RiTimeLine, RiUploadLine, RiFileLine, RiCheckLine, RiDownloadLine } from "@remixicon/react"
 import { toast } from "sonner"
 
 interface DetailRow {
@@ -35,6 +35,10 @@ export function PrescriptionForm() {
   const [doctors, setDoctors] = useState<DoctorOut[]>([])
   const [medications, setMedications] = useState<MedicationOut[]>([])
   const [saving, setSaving] = useState(false)
+  const [createdRx, setCreatedRx] = useState<PrescriptionOut | null>(null)
+  const [scanFile, setScanFile] = useState<File | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const scanRef = useRef<HTMLInputElement>(null)
 
   const [doctorId, setDoctorId] = useState("")
   const [diagnosis, setDiagnosis] = useState("")
@@ -93,13 +97,36 @@ export function PrescriptionForm() {
           scheduled_times: d.scheduled_times.length > 0 ? d.scheduled_times : null,
         })),
       }
-      await medicalHistoryApi.prescriptions.create(payload)
+      const rx = await medicalHistoryApi.prescriptions.create(payload)
       toast.success("Receta creada exitosamente")
-      navigate("/medical-history/prescriptions")
+      setCreatedRx(rx)
     } catch (err: any) {
       toast.error(err.detail || "Error al guardar")
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleUploadScan = async () => {
+    if (!scanFile || !createdRx) return
+    setUploading(true)
+    try {
+      const doc = await medicalHistoryApi.documents.upload(scanFile, "prescription", createdRx.id)
+      setCreatedRx({ ...createdRx, documents: [doc] })
+      toast.success("Escaneo adjuntado")
+      setScanFile(null)
+    } catch (err: any) {
+      toast.error(err.detail || "Error al subir escaneo")
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const handleDownload = async (docId: number) => {
+    try {
+      await medicalHistoryApi.documents.download(docId)
+    } catch (err: any) {
+      toast.error(err.detail || "Error al descargar")
     }
   }
 
@@ -115,7 +142,58 @@ export function PrescriptionForm() {
         </div>
       </div>
 
-      <Card>
+      {createdRx ? (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <RiCheckLine className="size-5 text-green-600" />
+              <CardTitle>Receta creada exitosamente</CardTitle>
+            </div>
+            <CardDescription>ID #{createdRx.id}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {createdRx.documents.length > 0 ? (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Escaneo adjuntado</p>
+                <div className="flex items-center gap-2 rounded-lg border p-3">
+                  <RiFileLine className="size-4 text-muted-foreground" />
+                  <span className="flex-1 text-sm font-medium">{createdRx.documents[0].filename}</span>
+                  <Button variant="ghost" size="icon-xs" onClick={() => handleDownload(createdRx.documents[0].id)}>
+                    <RiDownloadLine className="size-4" />
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm font-medium">Adjuntar escaneo o foto (opcional)</p>
+                <Input
+                  ref={scanRef}
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.doc,.docx"
+                  onChange={(e) => setScanFile(e.target.files?.[0] || null)}
+                />
+                {scanFile && (
+                  <div className="flex items-center justify-between rounded-lg border p-3">
+                    <div className="flex items-center gap-2">
+                      <RiFileLine className="size-4 text-muted-foreground" />
+                      <span className="text-sm">{scanFile.name}</span>
+                    </div>
+                    <Button size="sm" onClick={handleUploadScan} disabled={uploading}>
+                      <RiUploadLine className="mr-1 size-4" />
+                      {uploading ? "Subiendo..." : "Subir"}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+            <Button variant="outline" className="w-full" onClick={() => navigate("/medical-history/prescriptions")}>
+              Volver a recetas
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+        <Card>
         <CardHeader>
           <CardTitle>Datos de la receta</CardTitle>
           <CardDescription>Doctor, diagnostico y vigencia</CardDescription>
@@ -264,6 +342,8 @@ export function PrescriptionForm() {
           {saving ? "Guardando..." : "Guardar receta"}
         </Button>
       </div>
+      </>
+      )}
     </div>
   )
 }

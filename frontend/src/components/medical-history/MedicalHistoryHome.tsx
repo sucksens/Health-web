@@ -16,6 +16,7 @@ import {
   RiUserHeartLine,
   RiFolderLine,
   RiTimeLine,
+  RiFilePdf2Line,
 } from "@remixicon/react"
 
 const sections = [
@@ -27,6 +28,7 @@ const sections = [
   { title: "Medicamentos", url: "/medical-history/medications", icon: RiCapsuleLine, desc: "Catalogo de medicamentos", perm: "medical_history:read" },
   { title: "Documentos", url: "/medical-history/documents", icon: RiFolderLine, desc: "Archivos y documentos medicos", perm: "medical_history:read" },
   { title: "Tratamiento Activo", url: "/medical-history/adherence", icon: RiTimeLine, desc: "Registro diario de tomas", perm: "medical_history:read" },
+  { title: "Reportes", url: "/medical-history/reports", icon: RiFilePdf2Line, desc: "Genera reportes en PDF", perm: "medical_history:read" },
 ]
 
 export function MedicalHistoryHome() {

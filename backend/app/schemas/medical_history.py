@@ -218,6 +218,7 @@ class PrescriptionOut(BaseModel):
     created_at: datetime
     updated_at: datetime
     details: list[PrescriptionDetailOut] = []
+    documents: list["MedicalDocumentOut"] = Field(default_factory=list)
 
     model_config = {"from_attributes": True}
 
@@ -259,3 +260,6 @@ class AdherenceRecordOut(BaseModel):
     medication_name: Optional[str] = None
 
     model_config = {"from_attributes": True}
+
+
+PrescriptionOut.model_rebuild()

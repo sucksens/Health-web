@@ -388,6 +388,7 @@ export interface PrescriptionOut {
   created_at: string
   updated_at: string
   details: PrescriptionDetailOut[]
+  documents: MedicalDocumentOut[]
 }
 
 export interface PrescriptionCreate {

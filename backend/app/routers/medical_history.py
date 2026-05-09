@@ -12,7 +12,7 @@ from fastapi import (
 )
 from fastapi.responses import FileResponse
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.auth.dependencies import CurrentUser, require_permissions
 from app.database.db import get_db
@@ -500,6 +500,9 @@ def list_prescriptions(
     result = db.execute(
         select(Prescription)
         .where(Prescription.user_id == current_user.id)
+        .options(
+            selectinload(Prescription.details), selectinload(Prescription.documents)
+        )
         .order_by(Prescription.issue_date.desc())
         .offset(skip)
         .limit(limit)
@@ -539,7 +542,7 @@ def create_prescription(
         db.add(detail)
 
     db.flush()
-    db.refresh(rx)
+    db.refresh(rx, attribute_names=["details", "documents"])
 
     log_activity(
         db,
@@ -564,8 +567,10 @@ def get_prescription(
     db: Session = Depends(get_db),
 ):
     rx = db.execute(
-        select(Prescription).where(
-            Prescription.id == rx_id, Prescription.user_id == current_user.id
+        select(Prescription)
+        .where(Prescription.id == rx_id, Prescription.user_id == current_user.id)
+        .options(
+            selectinload(Prescription.details), selectinload(Prescription.documents)
         )
     ).scalar_one_or_none()
     if not rx:
@@ -585,8 +590,10 @@ def update_prescription(
     db: Session = Depends(get_db),
 ):
     rx = db.execute(
-        select(Prescription).where(
-            Prescription.id == rx_id, Prescription.user_id == current_user.id
+        select(Prescription)
+        .where(Prescription.id == rx_id, Prescription.user_id == current_user.id)
+        .options(
+            selectinload(Prescription.details), selectinload(Prescription.documents)
         )
     ).scalar_one_or_none()
     if not rx:
@@ -594,7 +601,7 @@ def update_prescription(
     for key, value in body.model_dump(exclude_unset=True).items():
         setattr(rx, key, value)
     db.flush()
-    db.refresh(rx)
+    db.refresh(rx, attribute_names=["details", "documents"])
     return rx
 
 

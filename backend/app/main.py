@@ -9,6 +9,7 @@ from app.routers import (
     body_metrics,
     medical_history,
     permissions,
+    reports,
     roles,
     users,
     weight_goals,
@@ -40,6 +41,7 @@ app.include_router(activity, prefix=api_prefix)
 app.include_router(body_metrics, prefix=api_prefix)
 app.include_router(weight_goals, prefix=api_prefix)
 app.include_router(medical_history, prefix=api_prefix)
+app.include_router(reports.router, prefix=api_prefix)
 
 os.makedirs("uploads", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")

@@ -640,6 +640,39 @@ export const medicalHistoryApi = {
       })
     },
   },
+
+  reports: {
+    download: async (type: string, dateFrom?: string, dateTo?: string): Promise<void> => {
+      const token = getAccessToken()
+      const params = new URLSearchParams()
+      if (dateFrom) params.set("date_from", dateFrom)
+      if (dateTo) params.set("date_to", dateTo)
+      const qs = params.toString()
+      const res = await fetch(`${API_BASE}/reports/${type}${qs ? `?${qs}` : ""}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) {
+        let detail = "Error al generar reporte"
+        try { const b = await res.json(); detail = b.detail || detail } catch {}
+        throw new ApiError(res.status, detail)
+      }
+      const contentDisposition = res.headers.get("content-disposition")
+      let filename = `${type}.pdf`
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename\*?=(?:UTF-8'')?["']?([^;"'\n]+)/i)
+        if (match) filename = decodeURIComponent(match[1])
+      }
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+    },
+  },
 }
 
 export { setTokens, clearTokens, getAccessToken, getRefreshToken, ApiError }

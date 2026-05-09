@@ -14,7 +14,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
-import { RiAddLine, RiMoreLine, RiDeleteBinLine, RiEyeLine } from "@remixicon/react"
+import { RiAddLine, RiMoreLine, RiDeleteBinLine, RiEyeLine, RiFileLine, RiDownloadLine } from "@remixicon/react"
 import { toast } from "sonner"
 
 export function PrescriptionsPage() {
@@ -56,6 +56,14 @@ export function PrescriptionsPage() {
       setDeleteRx(null)
     } catch (err: any) {
       toast.error(err.detail || "Error al eliminar")
+    }
+  }
+
+  const handleDownload = async (docId: number) => {
+    try {
+      await medicalHistoryApi.documents.download(docId)
+    } catch (err: any) {
+      toast.error(err.detail || "Error al descargar")
     }
   }
 
@@ -190,6 +198,24 @@ export function PrescriptionsPage() {
                   ))}
                   {detailRx.details.length === 0 && <p className="text-sm text-muted-foreground">Sin medicamentos</p>}
                 </div>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-2">Documento</p>
+                {detailRx.documents.length > 0 ? (
+                  <div className="space-y-2">
+                    {detailRx.documents.map((doc) => (
+                      <div key={doc.id} className="flex items-center gap-2 rounded-lg border p-3">
+                        <RiFileLine className="size-4 text-muted-foreground" />
+                        <span className="flex-1 text-sm font-medium">{doc.filename}</span>
+                        <Button variant="ghost" size="icon-xs" onClick={() => handleDownload(doc.id)}>
+                          <RiDownloadLine className="size-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Sin documento adjunto</p>
+                )}
               </div>
             </div>
           )}

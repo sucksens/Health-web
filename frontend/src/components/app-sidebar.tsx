@@ -103,6 +103,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               { title: "Medicamentos", url: "/medical-history/medications" },
               { title: "Documentos", url: "/medical-history/documents" },
               { title: "Tratamiento Activo", url: "/medical-history/adherence" },
+              { title: "Reportes", url: "/medical-history/reports" },
             ],
           },
         ]
