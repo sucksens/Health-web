@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -17,10 +19,13 @@ from app.routers import (
 
 import os
 
+_version_file = Path(__file__).resolve().parent.parent.parent / "VERSION"
+_version = _version_file.read_text().strip() if _version_file.exists() else "0.0.0"
+
 app = FastAPI(
     title="Health Web API",
     description="Sistema de salud personal con RBAC (Roles y Permisos)",
-    version="2.0.0",
+    version=_version,
 )
 
 app.add_middleware(
