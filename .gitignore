@@ -28,6 +28,9 @@ backend/uploads/
 node_modules/
 frontend/dist/
 frontend/.astro/
+frontend/dev.html 
+frontend/temp.js
+frontend/temp2.txt 
 
 # IDE
 .vscode/
