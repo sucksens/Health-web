@@ -440,3 +440,32 @@ export interface AdherenceRecordUpdate {
   notes?: string | null
   scheduled_time?: string
 }
+
+export interface DashboardAlert {
+  type: string
+  title: string
+  message: string
+}
+
+export interface AdminStats {
+  total_users: number
+  active_users: number
+  total_appointments: number
+  total_prescriptions: number
+  total_body_metrics: number
+  total_documents: number
+}
+
+export interface DashboardSummary {
+  latest_metric: BodyMetricOut | null
+  active_goal: WeightGoalWithProgress | null
+  upcoming_appointments: AppointmentOut[]
+  today_adherence: AdherenceRecordOut[]
+  today_adherence_rate: number | null
+  adherence_rate_7d: number | null
+  active_medications_count: number
+  pending_doses_today: number
+  recent_metrics: BodyMetricOut[]
+  alerts: DashboardAlert[]
+  admin_stats: AdminStats | null
+}

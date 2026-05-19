@@ -48,6 +48,7 @@ import type {
   AdherenceRecordOut,
   AdherenceRecordCreate,
   AdherenceRecordUpdate,
+  DashboardSummary,
 } from "./types"
 
 const API_BASE = import.meta.env.API_URL || "http://localhost:8000/api/v1"
@@ -676,3 +677,9 @@ export const medicalHistoryApi = {
 }
 
 export { setTokens, clearTokens, getAccessToken, getRefreshToken, ApiError }
+
+export const dashboardApi = {
+  summary: async (): Promise<DashboardSummary> => {
+    return request<DashboardSummary>("/dashboard/summary")
+  },
+}
