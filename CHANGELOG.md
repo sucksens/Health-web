@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-05-19
+
+### Added
+
+- Dashboard completo con resumen de salud, métricas corporales, metas de peso, citas próximas, adherencia a medicamentos y alertas
+- Endpoint `GET /dashboard/summary` con tasas de adherencia (hoy y 7 días), medicamentos activos y dosis pendientes
+- Registros manuales de medicamentos sin receta: botón flotante "+" en Tratamiento Activo para agregar tomas fuera de esquemas de receta
+- Modelo `AdherenceRecord` soporta registros standalone (`user_id` + `medication_name` directos, sin `prescription_detail_id`)
+- Migración `0005_standalone_adherence_records` para columnas `user_id`, `medication_name` y `prescription_detail_id` nullable
+- Reporte PDF de adherencia incluye medicamentos sin receta y tabla de detalle de tomas (fecha, hora, medicamento, estado, notas)
+- `devToolbar: false` en Astro config para resolver conflicto con `axobject-query` en dev server
+
+### Changed
+
+- `_enrich_record()` resuelve nombre de medicamento desde detail o record standalone
+- Queries de adherencia (today, history, dashboard) incluyen registros standalone
+- Endpoint `PATCH /adherence/{id}` verifica ownership vía receta o `user_id` directo
+
+---
+
 ## [0.3.0] - 2026-05-14
 
 ### Added
