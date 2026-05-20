@@ -23,9 +23,7 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
     must_change_password: Mapped[bool] = mapped_column(default=False, nullable=False)
     token_version: Mapped[int] = mapped_column(default=1, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: now_mx()
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: now_mx())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=lambda: now_mx(),
@@ -70,6 +68,12 @@ class User(Base):
 
     medical_documents: Mapped[list["MedicalDocument"]] = relationship(
         back_populates="user", lazy="select", cascade="all, delete-orphan"
+    )
+
+    blood_pressures: Mapped[list["BloodPressure"]] = relationship(
+        back_populates="user",
+        lazy="select",
+        order_by="BloodPressure.recorded_at.desc()",
     )
 
     def __repr__(self) -> str:

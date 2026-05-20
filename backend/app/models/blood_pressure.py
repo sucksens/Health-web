@@ -23,5 +23,7 @@ class BloodPressure(Base):
     recorded_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: now_mx())
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: now_mx())
 
+    user: Mapped["User"] = relationship(back_populates="blood_pressures")
+
     def __repr__(self) -> str:
         return f"<BloodPressure(id={self.id}, user_id={self.user_id}, {self.systolic}/{self.diastolic})>"
