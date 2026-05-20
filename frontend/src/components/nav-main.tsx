@@ -12,6 +12,7 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import { useNavigate, usePath } from "@/lib/router"
 import { RiArrowRightSLine } from "@remixicon/react"
@@ -32,6 +33,8 @@ export function NavMain({
 }) {
   const navigate = useNavigate()
   const path = usePath()
+  const { state } = useSidebar()
+  const isCollapsed = state === "collapsed"
 
   return (
     <SidebarGroup>
@@ -40,7 +43,7 @@ export function NavMain({
         {items.map((item) => {
           const isCurrentlyActive = path === item.url || path.startsWith(item.url + "/")
 
-          if (!item.items || item.items.length <= 1) {
+          if (!item.items || item.items.length <= 1 || isCollapsed) {
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton
