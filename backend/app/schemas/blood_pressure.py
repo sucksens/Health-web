@@ -70,3 +70,8 @@ class BloodPressureOut(BaseModel):
             recorded_at=obj.recorded_at,
             created_at=obj.created_at,
         )
+
+
+class BloodPressureListResponse(BaseModel):
+    items: list[BloodPressureOut]
+    total: int

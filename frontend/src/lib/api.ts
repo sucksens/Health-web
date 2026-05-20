@@ -52,6 +52,7 @@ import type {
   BloodPressureCreate,
   BloodPressureUpdate,
   BloodPressureStats,
+  BloodPressureListResponse,
   DashboardSummary,
 } from "./types"
 
@@ -681,8 +682,19 @@ export const medicalHistoryApi = {
 }
 
 export const bloodPressureApi = {
-  list: async (skip = 0, limit = 50): Promise<BloodPressureOut[]> => {
-    return request<BloodPressureOut[]>(`/blood-pressure?skip=${skip}&limit=${limit}`)
+  list: async (
+    skip = 0,
+    limit = 100,
+    dateFrom?: string,
+    dateTo?: string,
+  ): Promise<BloodPressureListResponse> => {
+    const params = new URLSearchParams({
+      skip: String(skip),
+      limit: String(limit),
+    })
+    if (dateFrom) params.set("date_from", dateFrom)
+    if (dateTo) params.set("date_to", dateTo)
+    return request<BloodPressureListResponse>(`/blood-pressure?${params}`)
   },
 
   getLatest: async (): Promise<BloodPressureOut | null> => {
@@ -693,8 +705,15 @@ export const bloodPressureApi = {
     return request<BloodPressureOut>(`/blood-pressure/${id}`)
   },
 
-  stats: async (): Promise<BloodPressureStats> => {
-    return request<BloodPressureStats>("/blood-pressure/stats")
+  stats: async (
+    dateFrom?: string,
+    dateTo?: string,
+  ): Promise<BloodPressureStats> => {
+    const params = new URLSearchParams()
+    if (dateFrom) params.set("date_from", dateFrom)
+    if (dateTo) params.set("date_to", dateTo)
+    const qs = params.toString()
+    return request<BloodPressureStats>(`/blood-pressure/stats${qs ? `?${qs}` : ""}`)
   },
 
   create: async (body: BloodPressureCreate): Promise<BloodPressureOut> => {

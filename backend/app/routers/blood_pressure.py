@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select, func
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import select, func, case
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import CurrentUser, require_permissions
@@ -8,11 +8,13 @@ from app.models.blood_pressure import BloodPressure
 from app.schemas.blood_pressure import (
     BloodPressureCreate,
     BloodPressureOut,
+    BloodPressureListResponse,
     BloodPressureUpdate,
     classify_bp,
 )
 from app.config.tz import now_mx
-from datetime import timedelta
+from datetime import datetime, timedelta
+from calendar import monthrange
 
 router = APIRouter(prefix="/blood-pressure", tags=["Blood Pressure"])
 
@@ -21,61 +23,112 @@ def _to_out(bp: BloodPressure) -> BloodPressureOut:
     return BloodPressureOut.from_orm(bp)
 
 
+def _default_date_range():
+    now = now_mx().replace(tzinfo=None)
+    date_from = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    last_day = monthrange(now.year, now.month)[1]
+    date_to = now.replace(
+        day=last_day, hour=23, minute=59, second=59, microsecond=999999
+    )
+    return date_from, date_to
+
+
 @router.get(
     "/stats",
     dependencies=[Depends(require_permissions("blood_pressure:read"))],
 )
-def get_stats(current_user: CurrentUser, db: Session = Depends(get_db)):
+def get_stats(
+    current_user: CurrentUser,
+    db: Session = Depends(get_db),
+    date_from: datetime | None = Query(None),
+    date_to: datetime | None = Query(None),
+):
     uid = current_user.id
     now_naive = now_mx().replace(tzinfo=None)
 
-    all_readings = (
-        db.execute(
-            select(BloodPressure)
-            .where(BloodPressure.user_id == uid)
-            .order_by(BloodPressure.recorded_at.desc())
-        )
-        .scalars()
-        .all()
+    if date_from is None or date_to is None:
+        date_from, date_to = _default_date_range()
+
+    base_q = select(BloodPressure).where(
+        BloodPressure.user_id == uid,
+        BloodPressure.recorded_at >= date_from,
+        BloodPressure.recorded_at <= date_to,
     )
 
-    total = len(all_readings)
+    total = db.execute(select(func.count()).select_from(base_q.subquery())).scalar_one()
+
     if total == 0:
         return {"total": 0, "avg_7d": None, "avg_30d": None, "distribution": {}}
+
+    agg = db.execute(
+        select(
+            func.avg(BloodPressure.systolic),
+            func.avg(BloodPressure.diastolic),
+            func.avg(BloodPressure.heart_rate),
+            func.count(),
+        ).where(
+            BloodPressure.user_id == uid,
+            BloodPressure.recorded_at >= date_from,
+            BloodPressure.recorded_at <= date_to,
+        )
+    ).one()
+    avg_s, avg_d, avg_hr, _ = agg
 
     seven_days_ago = now_naive - timedelta(days=7)
     thirty_days_ago = now_naive - timedelta(days=30)
 
-    r7 = [r for r in all_readings if r.recorded_at and r.recorded_at >= seven_days_ago]
-    r30 = [
-        r for r in all_readings if r.recorded_at and r.recorded_at >= thirty_days_ago
-    ]
-
-    def avg_fields(readings):
-        if not readings:
-            return None
-        n = len(readings)
-        return {
-            "systolic": round(sum(r.systolic for r in readings) / n, 1),
-            "diastolic": round(sum(r.diastolic for r in readings) / n, 1),
-            "heart_rate": round(
-                sum(r.heart_rate for r in readings if r.heart_rate)
-                / max(1, sum(1 for r in readings if r.heart_rate)),
-                1,
+    def _avg_in_range(start):
+        row = db.execute(
+            select(
+                func.avg(BloodPressure.systolic),
+                func.avg(BloodPressure.diastolic),
+                func.avg(BloodPressure.heart_rate),
+            ).where(
+                BloodPressure.user_id == uid,
+                BloodPressure.recorded_at >= start,
+                BloodPressure.recorded_at <= date_to,
             )
-            if any(r.heart_rate for r in readings)
-            else None,
+        ).one()
+        s, d, h = row
+        if s is None:
+            return None
+        return {
+            "systolic": round(s, 1),
+            "diastolic": round(d, 1),
+            "heart_rate": round(h, 1) if h else None,
         }
 
-    distribution: dict[str, int] = {}
-    for r in all_readings:
-        c = classify_bp(r.systolic, r.diastolic)
-        distribution[c] = distribution.get(c, 0) + 1
+    avg_7d = _avg_in_range(seven_days_ago)
+    avg_30d = _avg_in_range(thirty_days_ago)
+
+    dist_rows = db.execute(
+        select(
+            func.count(),
+            case(
+                (BloodPressure.systolic > 180, "Crisis"),
+                (BloodPressure.diastolic > 120, "Crisis"),
+                (BloodPressure.systolic >= 140, "Stage 2"),
+                (BloodPressure.diastolic >= 90, "Stage 2"),
+                (BloodPressure.systolic >= 130, "Stage 1"),
+                (BloodPressure.diastolic >= 80, "Stage 1"),
+                (BloodPressure.systolic >= 120, "Elevated"),
+                else_="Normal",
+            ).label("cls"),
+        )
+        .where(
+            BloodPressure.user_id == uid,
+            BloodPressure.recorded_at >= date_from,
+            BloodPressure.recorded_at <= date_to,
+        )
+        .group_by("cls")
+    ).all()
+
+    distribution = {cls: cnt for cnt, cls in dist_rows}
 
     return {
         "total": total,
-        "avg_7d": avg_fields(r7),
-        "avg_30d": avg_fields(r30),
+        "avg_7d": avg_7d,
+        "avg_30d": avg_30d,
         "distribution": distribution,
     }
 
@@ -97,23 +150,33 @@ def get_latest(current_user: CurrentUser, db: Session = Depends(get_db)):
 
 @router.get(
     "",
-    response_model=list[BloodPressureOut],
+    response_model=BloodPressureListResponse,
     dependencies=[Depends(require_permissions("blood_pressure:read"))],
 )
 def list_readings(
     current_user: CurrentUser,
     skip: int = 0,
-    limit: int = 50,
+    limit: int = 100,
+    date_from: datetime | None = Query(None),
+    date_to: datetime | None = Query(None),
     db: Session = Depends(get_db),
 ):
-    result = db.execute(
-        select(BloodPressure)
-        .where(BloodPressure.user_id == current_user.id)
-        .order_by(BloodPressure.recorded_at.desc())
-        .offset(skip)
-        .limit(limit)
+    if date_from is None or date_to is None:
+        date_from, date_to = _default_date_range()
+
+    base_q = select(BloodPressure).where(
+        BloodPressure.user_id == current_user.id,
+        BloodPressure.recorded_at >= date_from,
+        BloodPressure.recorded_at <= date_to,
     )
-    return [_to_out(bp) for bp in result.scalars().all()]
+
+    total = db.execute(select(func.count()).select_from(base_q.subquery())).scalar_one()
+
+    result = db.execute(
+        base_q.order_by(BloodPressure.recorded_at.desc()).offset(skip).limit(limit)
+    )
+    items = [_to_out(bp) for bp in result.scalars().all()]
+    return BloodPressureListResponse(items=items, total=total)
 
 
 @router.post(

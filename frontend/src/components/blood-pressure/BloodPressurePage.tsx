@@ -30,7 +30,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { BloodPressureChart } from "./BloodPressureChart"
-import { RiAddLine, RiPencilLine, RiDeleteBinLine, RiHeartPulseLine, RiFileDownloadLine } from "@remixicon/react"
+import { RiAddLine, RiPencilLine, RiDeleteBinLine, RiHeartPulseLine, RiFileDownloadLine, RiCalendarLine } from "@remixicon/react"
 import { toast } from "sonner"
 
 function classifyBP(systolic: number, diastolic: number): string {
@@ -85,21 +85,38 @@ export function BloodPressurePage() {
   const [pdfDateTo, setPdfDateTo] = useState("")
   const [downloadingPdf, setDownloadingPdf] = useState(false)
 
+  const now = new Date()
+  const defaultDateFrom = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+  const defaultDateTo = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`
+
+  const [filterFrom, setFilterFrom] = useState(defaultDateFrom)
+  const [filterTo, setFilterTo] = useState(defaultDateTo)
+
+  const [latestReading, setLatestReading] = useState<BloodPressureOut | null>(null)
+
   const fetchReadings = useCallback(async () => {
     try {
-      const data = await bloodPressureApi.list()
-      setReadings(data)
+      const data = await bloodPressureApi.list(0, 100, filterFrom, filterTo)
+      setReadings(data.items)
     } catch {
       toast.error("Error al cargar lecturas")
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [filterFrom, filterTo])
 
   const fetchStats = useCallback(async () => {
     try {
-      const data = await bloodPressureApi.stats()
+      const data = await bloodPressureApi.stats(filterFrom, filterTo)
       setStats(data)
+    } catch {}
+  }, [filterFrom, filterTo])
+
+  const fetchLatest = useCallback(async () => {
+    try {
+      const data = await bloodPressureApi.getLatest()
+      setLatestReading(data)
     } catch {}
   }, [])
 
@@ -107,8 +124,9 @@ export function BloodPressurePage() {
     if (canRead) {
       fetchReadings()
       fetchStats()
+      fetchLatest()
     }
-  }, [canRead, fetchReadings, fetchStats])
+  }, [canRead, fetchReadings, fetchStats, fetchLatest])
 
   const handleDownloadPdf = async () => {
     setDownloadingPdf(true)
@@ -134,7 +152,7 @@ export function BloodPressurePage() {
     )
   }
 
-  const latest = readings.length > 0 ? readings[0] : null
+  const latest = latestReading
   const prev = readings.length > 1 ? readings[1] : null
 
   const handleCreate = () => {
@@ -196,6 +214,7 @@ export function BloodPressurePage() {
       setShowDialog(false)
       fetchReadings()
       fetchStats()
+      fetchLatest()
     } catch (err: any) {
       toast.error(err.detail || "Error al guardar")
     } finally {
@@ -212,6 +231,7 @@ export function BloodPressurePage() {
       setDeleteId(null)
       fetchReadings()
       fetchStats()
+      fetchLatest()
     } catch (err: any) {
       toast.error(err.detail || "Error al eliminar")
     } finally {
@@ -248,6 +268,42 @@ export function BloodPressurePage() {
             </Button>
           </div>
         )}
+      </div>
+
+      <div className="flex items-end gap-3">
+        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-1">
+          <RiCalendarLine className="size-4" />
+          <span>Filtro</span>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">Desde</Label>
+          <Input
+            type="date"
+            value={filterFrom}
+            onChange={(e) => { setFilterFrom(e.target.value); setLoading(true) }}
+            className="w-40"
+          />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">Hasta</Label>
+          <Input
+            type="date"
+            value={filterTo}
+            onChange={(e) => { setFilterTo(e.target.value); setLoading(true) }}
+            className="w-40"
+          />
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            setFilterFrom(defaultDateFrom)
+            setFilterTo(defaultDateTo)
+            setLoading(true)
+          }}
+        >
+          Mes actual
+        </Button>
       </div>
 
       {latest && (
@@ -355,7 +411,14 @@ export function BloodPressurePage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Historial de lecturas</CardTitle>
+          <CardTitle className="text-base">
+            Historial de lecturas
+            {stats && stats.total > 0 && (
+              <span className="ml-2 text-sm font-normal text-muted-foreground">
+                ({stats.total} en el rango)
+              </span>
+            )}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (

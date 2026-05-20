@@ -514,3 +514,8 @@ export interface BloodPressureStats {
   avg_30d: BloodPressureStatsAvg | null
   distribution: Record<string, number>
 }
+
+export interface BloodPressureListResponse {
+  items: BloodPressureOut[]
+  total: number
+}
