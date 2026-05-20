@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.auth.dependencies import CurrentUser
 from app.database.db import get_db
 from app.models.body_metric import BodyMetric
+from app.models.blood_pressure import BloodPressure
 from app.models.medical_history import (
     Appointment,
     Prescription,
@@ -298,6 +299,68 @@ def get_dashboard_summary(current_user: CurrentUser, db: Session = Depends(get_d
                     ),
                 )
             )
+
+        latest_bp = db.execute(
+            select(BloodPressure)
+            .where(BloodPressure.user_id == uid)
+            .order_by(BloodPressure.recorded_at.desc())
+            .limit(1)
+        ).scalar_one_or_none()
+
+        if latest_bp:
+            from app.schemas.blood_pressure import classify_bp
+
+            bp_class = classify_bp(latest_bp.systolic, latest_bp.diastolic)
+            if bp_class == "Crisis":
+                alerts.append(
+                    DashboardAlert(
+                        type="error",
+                        title="Lectura critica de presion arterial",
+                        message=(
+                            f"Tu ultima lectura ({latest_bp.systolic:.0f}/"
+                            f"{latest_bp.diastolic:.0f}) esta en rango CRISIS. "
+                            f"Busca atencion medica inmediata."
+                        ),
+                    )
+                )
+            elif bp_class == "Stage 2":
+                alerts.append(
+                    DashboardAlert(
+                        type="warning",
+                        title="Presion arterial elevada",
+                        message=(
+                            f"Tu ultima lectura ({latest_bp.systolic:.0f}/"
+                            f"{latest_bp.diastolic:.0f}) indica hipertension "
+                            f"Stage 2. Consulta a tu medico."
+                        ),
+                    )
+                )
+            elif bp_class in ("Stage 1", "Elevated"):
+                recent_3 = (
+                    db.execute(
+                        select(BloodPressure)
+                        .where(BloodPressure.user_id == uid)
+                        .order_by(BloodPressure.recorded_at.desc())
+                        .limit(3)
+                    )
+                    .scalars()
+                    .all()
+                )
+                if len(recent_3) >= 3 and all(
+                    classify_bp(r.systolic, r.diastolic)
+                    in ("Stage 1", "Elevated", "Stage 2")
+                    for r in recent_3
+                ):
+                    alerts.append(
+                        DashboardAlert(
+                            type="info",
+                            title="Tendencia de presion arterial",
+                            message=(
+                                f"Tus ultimas {len(recent_3)} lecturas muestran "
+                                f"presion elevada. Considera consultar a tu medico."
+                            ),
+                        )
+                    )
 
         admin_stats = None
         if _has_role(current_user, "admin") or _has_role(current_user, "manager"):

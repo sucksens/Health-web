@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/lib/auth"
 import { bloodPressureApi } from "@/lib/api"
-import type { BloodPressureOut } from "@/lib/types"
+import type { BloodPressureOut, BloodPressureStats } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { BloodPressureChart } from "./BloodPressureChart"
 import { RiAddLine, RiPencilLine, RiDeleteBinLine, RiHeartPulseLine } from "@remixicon/react"
 import { toast } from "sonner"
 
@@ -65,6 +66,7 @@ export function BloodPressurePage() {
   const canDelete = hasPermission("blood_pressure:delete")
 
   const [readings, setReadings] = useState<BloodPressureOut[]>([])
+  const [stats, setStats] = useState<BloodPressureStats | null>(null)
   const [loading, setLoading] = useState(true)
 
   const [showDialog, setShowDialog] = useState(false)
@@ -90,9 +92,19 @@ export function BloodPressurePage() {
     }
   }, [])
 
+  const fetchStats = useCallback(async () => {
+    try {
+      const data = await bloodPressureApi.stats()
+      setStats(data)
+    } catch {}
+  }, [])
+
   useEffect(() => {
-    if (canRead) fetchReadings()
-  }, [canRead, fetchReadings])
+    if (canRead) {
+      fetchReadings()
+      fetchStats()
+    }
+  }, [canRead, fetchReadings, fetchStats])
 
   if (!canRead) {
     return (
@@ -158,6 +170,7 @@ export function BloodPressurePage() {
       }
       setShowDialog(false)
       fetchReadings()
+      fetchStats()
     } catch (err: any) {
       toast.error(err.detail || "Error al guardar")
     } finally {
@@ -173,6 +186,7 @@ export function BloodPressurePage() {
       toast.success("Lectura eliminada")
       setDeleteId(null)
       fetchReadings()
+      fetchStats()
     } catch (err: any) {
       toast.error(err.detail || "Error al eliminar")
     } finally {
@@ -253,6 +267,54 @@ export function BloodPressurePage() {
               <p className="text-xs text-muted-foreground">
                 {formatDate(latest.recorded_at)}
               </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      <BloodPressureChart readings={readings} />
+
+      {stats && stats.total > 0 && (
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Promedio 7 dias</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {stats.avg_7d ? (
+                <p className="text-xl font-bold">{stats.avg_7d.systolic}/{stats.avg_7d.diastolic} <span className="text-sm font-normal text-muted-foreground">mmHg</span></p>
+              ) : (
+                <p className="text-muted-foreground">Sin datos</p>
+              )}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Promedio 30 dias</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {stats.avg_30d ? (
+                <p className="text-xl font-bold">{stats.avg_30d.systolic}/{stats.avg_30d.diastolic} <span className="text-sm font-normal text-muted-foreground">mmHg</span></p>
+              ) : (
+                <p className="text-muted-foreground">Sin datos</p>
+              )}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardDescription>Total lecturas</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xl font-bold">{stats.total}</p>
+              {Object.keys(stats.distribution).length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {Object.entries(stats.distribution).map(([cls, count]) => (
+                    <Badge key={cls} variant={getClassColor(cls)} className="text-[10px] px-1 py-0">
+                      {cls}: {count}
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

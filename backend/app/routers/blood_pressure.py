@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import CurrentUser, require_permissions
@@ -9,14 +9,75 @@ from app.schemas.blood_pressure import (
     BloodPressureCreate,
     BloodPressureOut,
     BloodPressureUpdate,
+    classify_bp,
 )
 from app.config.tz import now_mx
+from datetime import timedelta
 
 router = APIRouter(prefix="/blood-pressure", tags=["Blood Pressure"])
 
 
 def _to_out(bp: BloodPressure) -> BloodPressureOut:
     return BloodPressureOut.from_orm(bp)
+
+
+@router.get(
+    "/stats",
+    dependencies=[Depends(require_permissions("blood_pressure:read"))],
+)
+def get_stats(current_user: CurrentUser, db: Session = Depends(get_db)):
+    uid = current_user.id
+    now_naive = now_mx().replace(tzinfo=None)
+
+    all_readings = (
+        db.execute(
+            select(BloodPressure)
+            .where(BloodPressure.user_id == uid)
+            .order_by(BloodPressure.recorded_at.desc())
+        )
+        .scalars()
+        .all()
+    )
+
+    total = len(all_readings)
+    if total == 0:
+        return {"total": 0, "avg_7d": None, "avg_30d": None, "distribution": {}}
+
+    seven_days_ago = now_naive - timedelta(days=7)
+    thirty_days_ago = now_naive - timedelta(days=30)
+
+    r7 = [r for r in all_readings if r.recorded_at and r.recorded_at >= seven_days_ago]
+    r30 = [
+        r for r in all_readings if r.recorded_at and r.recorded_at >= thirty_days_ago
+    ]
+
+    def avg_fields(readings):
+        if not readings:
+            return None
+        n = len(readings)
+        return {
+            "systolic": round(sum(r.systolic for r in readings) / n, 1),
+            "diastolic": round(sum(r.diastolic for r in readings) / n, 1),
+            "heart_rate": round(
+                sum(r.heart_rate for r in readings if r.heart_rate)
+                / max(1, sum(1 for r in readings if r.heart_rate)),
+                1,
+            )
+            if any(r.heart_rate for r in readings)
+            else None,
+        }
+
+    distribution: dict[str, int] = {}
+    for r in all_readings:
+        c = classify_bp(r.systolic, r.diastolic)
+        distribution[c] = distribution.get(c, 0) + 1
+
+    return {
+        "total": total,
+        "avg_7d": avg_fields(r7),
+        "avg_30d": avg_fields(r30),
+        "distribution": distribution,
+    }
 
 
 @router.get(

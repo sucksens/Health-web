@@ -51,6 +51,7 @@ import type {
   BloodPressureOut,
   BloodPressureCreate,
   BloodPressureUpdate,
+  BloodPressureStats,
   DashboardSummary,
 } from "./types"
 
@@ -690,6 +691,10 @@ export const bloodPressureApi = {
 
   get: async (id: number): Promise<BloodPressureOut> => {
     return request<BloodPressureOut>(`/blood-pressure/${id}`)
+  },
+
+  stats: async (): Promise<BloodPressureStats> => {
+    return request<BloodPressureStats>("/blood-pressure/stats")
   },
 
   create: async (body: BloodPressureCreate): Promise<BloodPressureOut> => {

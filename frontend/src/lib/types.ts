@@ -500,3 +500,16 @@ export interface BloodPressureUpdate {
   notes?: string | null
   recorded_at?: string | null
 }
+
+export interface BloodPressureStatsAvg {
+  systolic: number
+  diastolic: number
+  heart_rate: number | null
+}
+
+export interface BloodPressureStats {
+  total: number
+  avg_7d: BloodPressureStatsAvg | null
+  avg_30d: BloodPressureStatsAvg | null
+  distribution: Record<string, number>
+}
