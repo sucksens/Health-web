@@ -48,6 +48,9 @@ import type {
   AdherenceRecordOut,
   AdherenceRecordCreate,
   AdherenceRecordUpdate,
+  BloodPressureOut,
+  BloodPressureCreate,
+  BloodPressureUpdate,
   DashboardSummary,
 } from "./types"
 
@@ -673,6 +676,38 @@ export const medicalHistoryApi = {
       a.remove()
       URL.revokeObjectURL(url)
     },
+  },
+}
+
+export const bloodPressureApi = {
+  list: async (skip = 0, limit = 50): Promise<BloodPressureOut[]> => {
+    return request<BloodPressureOut[]>(`/blood-pressure?skip=${skip}&limit=${limit}`)
+  },
+
+  getLatest: async (): Promise<BloodPressureOut | null> => {
+    return request<BloodPressureOut | null>("/blood-pressure/latest")
+  },
+
+  get: async (id: number): Promise<BloodPressureOut> => {
+    return request<BloodPressureOut>(`/blood-pressure/${id}`)
+  },
+
+  create: async (body: BloodPressureCreate): Promise<BloodPressureOut> => {
+    return request<BloodPressureOut>("/blood-pressure", {
+      method: "POST",
+      body: JSON.stringify(body),
+    })
+  },
+
+  update: async (id: number, body: BloodPressureUpdate): Promise<BloodPressureOut> => {
+    return request<BloodPressureOut>(`/blood-pressure/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    })
+  },
+
+  delete: async (id: number): Promise<void> => {
+    return request(`/blood-pressure/${id}`, { method: "DELETE" })
   },
 }
 

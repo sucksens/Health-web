@@ -12,6 +12,7 @@ import { ActivityPage } from "@/components/activity/ActivityPage"
 import { ProfilePage } from "@/components/profile/ProfilePage"
 import { BodyMetricsPage } from "@/components/body-metrics/BodyMetricsPage"
 import { WeightGoalHistoryPage } from "@/components/body-metrics/WeightGoalHistoryPage"
+import { BloodPressurePage } from "@/components/blood-pressure/BloodPressurePage"
 import { ForcePasswordChangePage } from "@/components/auth/ForcePasswordChangePage"
 import { MedicalHistoryHome } from "@/components/medical-history/MedicalHistoryHome"
 import { PatientProfileForm } from "@/components/medical-history/PatientProfileForm"
@@ -42,6 +43,7 @@ const routeLabels: Record<string, string> = {
   "/profile": "Mi Perfil",
   "/body-metrics": "Medidas Corporales",
   "/body-metrics/goals": "Historial de Metas",
+  "/blood-pressure": "Presion Arterial",
   "/force-password-change": "Cambiar contrasena",
   "/medical-history": "Historial Medico",
   "/medical-history/profile": "Perfil de Salud",
@@ -137,6 +139,7 @@ function RouteGuard() {
       {currentPath === "/profile" && <ProfilePage />}
       {currentPath === "/body-metrics" && <BodyMetricsPage />}
       {currentPath === "/body-metrics/goals" && <WeightGoalHistoryPage />}
+      {currentPath === "/blood-pressure" && <BloodPressurePage />}
       {currentPath === "/medical-history" && <MedicalHistoryHome />}
       {currentPath === "/medical-history/profile" && <PatientProfileForm />}
       {currentPath === "/medical-history/doctors" && <DoctorsPage />}

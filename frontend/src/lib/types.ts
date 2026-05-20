@@ -470,3 +470,33 @@ export interface DashboardSummary {
   alerts: DashboardAlert[]
   admin_stats: AdminStats | null
 }
+
+// ── Blood Pressure ──────────────────────────────────────────────────────────
+
+export interface BloodPressureOut {
+  id: number
+  user_id: number
+  systolic: number
+  diastolic: number
+  heart_rate: number | null
+  notes: string | null
+  classification: string
+  recorded_at: string
+  created_at: string
+}
+
+export interface BloodPressureCreate {
+  systolic: number
+  diastolic: number
+  heart_rate?: number | null
+  notes?: string | null
+  recorded_at?: string | null
+}
+
+export interface BloodPressureUpdate {
+  systolic?: number
+  diastolic?: number
+  heart_rate?: number | null
+  notes?: string | null
+  recorded_at?: string | null
+}
