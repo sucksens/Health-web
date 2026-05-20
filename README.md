@@ -308,4 +308,4 @@ Los reportes se descargan como archivos PDF con encabezado, pie de pagina, tabla
 
 ## Licencia
 
-Proyecto privado. Todos los derechos reservados.
+AGPL3 

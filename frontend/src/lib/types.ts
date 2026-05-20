@@ -420,7 +420,7 @@ export interface MedicalDocumentOut {
 
 export interface AdherenceRecordOut {
   id: number
-  prescription_detail_id: number
+  prescription_detail_id: number | null
   scheduled_time: string
   taken_at: string | null
   status: string
@@ -430,7 +430,8 @@ export interface AdherenceRecordOut {
 }
 
 export interface AdherenceRecordCreate {
-  prescription_detail_id: number
+  prescription_detail_id?: number | null
+  medication_name?: string | null
   scheduled_time: string
   notes?: string | null
 }

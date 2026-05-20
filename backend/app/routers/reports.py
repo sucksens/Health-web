@@ -769,7 +769,7 @@ def report_adherence(
         dt = now_mx()
     name = _user_name(current_user)
 
-    records = (
+    rx_records = (
         db.execute(
             select(AdherenceRecord)
             .join(PrescriptionDetail)
@@ -779,21 +779,47 @@ def report_adherence(
                 AdherenceRecord.scheduled_time >= df,
                 AdherenceRecord.scheduled_time <= dt,
             )
-            .order_by(AdherenceRecord.scheduled_time)
         )
         .scalars()
         .all()
     )
 
+    standalone_records = (
+        db.execute(
+            select(AdherenceRecord).where(
+                AdherenceRecord.user_id == current_user.id,
+                AdherenceRecord.prescription_detail_id.is_(None),
+                AdherenceRecord.scheduled_time >= df,
+                AdherenceRecord.scheduled_time <= dt,
+            )
+        )
+        .scalars()
+        .all()
+    )
+
+    records = sorted(
+        list(rx_records) + list(standalone_records),
+        key=lambda r: r.scheduled_time,
+    )
+
     details_map: dict[int, PrescriptionDetail] = {}
-    if records:
-        detail_ids = {r.prescription_detail_id for r in records}
+    if rx_records:
+        detail_ids = {
+            r.prescription_detail_id
+            for r in rx_records
+            if r.prescription_detail_id is not None
+        }
         for did in detail_ids:
             det = db.execute(
                 select(PrescriptionDetail).where(PrescriptionDetail.id == did)
             ).scalar_one_or_none()
             if det:
                 details_map[did] = det
+
+    def _med_name(r: AdherenceRecord) -> str:
+        if r.prescription_detail_id and r.prescription_detail_id in details_map:
+            return details_map[r.prescription_detail_id].medication_name
+        return r.medication_name or "Desconocido"
 
     pdf = ReportPDF("Adherencia a Medicamentos", name)
     pdf.alias_nb_pages()
@@ -843,8 +869,7 @@ def report_adherence(
 
         by_med: dict[str, list[AdherenceRecord]] = {}
         for r in records:
-            det = details_map.get(r.prescription_detail_id)
-            mname = det.medication_name if det else "Desconocido"
+            mname = _med_name(r)
             by_med.setdefault(mname, []).append(r)
 
         pdf.add_page()
@@ -885,6 +910,33 @@ def report_adherence(
             ax2.tick_params(labelsize=8)
             fig2.tight_layout()
             pdf.add_chart(fig2)
+
+        pdf.add_page()
+        pdf.section_title("Detalle de Tomas")
+        status_labels = {
+            "taken": "Tomada",
+            "skipped": "Saltada",
+            "late": "Tarde",
+            "pending": "Pendiente",
+        }
+        detail_rows = []
+        for r in records:
+            detail_rows.append(
+                [
+                    _fmt_date(r.scheduled_time),
+                    r.scheduled_time.strftime("%H:%M")
+                    if isinstance(r.scheduled_time, datetime)
+                    else "-",
+                    _med_name(r),
+                    status_labels.get(r.status, r.status),
+                    (r.notes or "-")[:40],
+                ]
+            )
+        pdf.add_table(
+            ["Fecha", "Hora", "Medicamento", "Estado", "Notas"],
+            detail_rows,
+            col_widths=[28, 18, 60, 24, 60],
+        )
 
     return _build_response(pdf, f"adherencia_{now_mx().strftime('%Y%m%d')}.pdf")
 

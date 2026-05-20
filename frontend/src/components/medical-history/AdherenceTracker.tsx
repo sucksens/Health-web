@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { RiCheckLine, RiCloseLine, RiTimeLine, RiCapsuleLine, RiEditLine } from "@remixicon/react"
+import { RiCheckLine, RiCloseLine, RiTimeLine, RiCapsuleLine, RiEditLine, RiAddLine } from "@remixicon/react"
 import { toast } from "sonner"
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
@@ -32,6 +32,14 @@ export function AdherenceTracker() {
   const [notes, setNotes] = useState("")
   const [editingTime, setEditingTime] = useState<number | null>(null)
   const [editTimeValue, setEditTimeValue] = useState("")
+  const [showManual, setShowManual] = useState(false)
+  const [manualName, setManualName] = useState("")
+  const [manualTime, setManualTime] = useState(() => {
+    const now = new Date()
+    return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`
+  })
+  const [manualNotes, setManualNotes] = useState("")
+  const [manualSaving, setManualSaving] = useState(false)
 
   const canRead = hasPermission("medical_history:read")
   const canUpdate = hasPermission("medical_history:update")
@@ -104,6 +112,33 @@ export function AdherenceTracker() {
     return d.toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" })
   }
 
+  const handleManualSave = async () => {
+    if (!manualName.trim()) {
+      toast.error("Ingresa el nombre del medicamento")
+      return
+    }
+    setManualSaving(true)
+    try {
+      const today = new Date().toISOString().slice(0, 10)
+      await medicalHistoryApi.adherence.create({
+        medication_name: manualName.trim(),
+        scheduled_time: `${today}T${manualTime}:00-06:00`,
+        notes: manualNotes.trim() || undefined,
+      })
+      toast.success("Registro agregado")
+      setShowManual(false)
+      setManualName("")
+      setManualNotes("")
+      const now = new Date()
+      setManualTime(`${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`)
+      load()
+    } catch (err: any) {
+      toast.error(err.detail || "Error al guardar")
+    } finally {
+      setManualSaving(false)
+    }
+  }
+
   const pending = todayRecords.filter((r) => r.status === "pending")
   const completed = todayRecords.filter((r) => r.status !== "pending")
 
@@ -165,7 +200,12 @@ export function AdherenceTracker() {
                           <RiCapsuleLine className="size-5" />
                         </div>
                         <div>
-                          <p className="text-sm font-semibold">{record.medication_name || "Medicamento"}</p>
+                          <p className="text-sm font-semibold">
+                            {record.medication_name || "Medicamento"}
+                            {!record.prescription_detail_id && (
+                              <span className="ml-2 text-xs font-normal text-muted-foreground">(sin receta)</span>
+                            )}
+                          </p>
                           <div className="flex items-center gap-1">
                             {editingTime === record.id ? (
                               <div className="flex items-center gap-1">
@@ -279,6 +319,58 @@ export function AdherenceTracker() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={showManual} onOpenChange={setShowManual}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Registrar medicamento</DialogTitle>
+            <DialogDescription>Agrega un medicamento que tomaste sin receta medica</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Medicamento *</Label>
+              <Input
+                value={manualName}
+                onChange={(e) => setManualName(e.target.value)}
+                placeholder="Ej: Paracetamol 500mg"
+                autoFocus
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Hora</Label>
+              <Input
+                type="time"
+                value={manualTime}
+                onChange={(e) => setManualTime(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Notas (opcional)</Label>
+              <Input
+                value={manualNotes}
+                onChange={(e) => setManualNotes(e.target.value)}
+                placeholder="Ej: Tome por dolor de cabeza"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowManual(false)}>Cancelar</Button>
+            <Button onClick={handleManualSave} disabled={manualSaving}>
+              {manualSaving ? "Guardando..." : "Guardar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {hasPermission("medical_history:create") && (
+        <button
+          onClick={() => setShowManual(true)}
+          className="fixed bottom-6 right-6 z-50 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-110 active:scale-95"
+          title="Registrar medicamento"
+        >
+          <RiAddLine className="size-6" />
+        </button>
+      )}
     </div>
   )
 }

@@ -263,18 +263,24 @@ class AdherenceRecord(Base):
     __tablename__ = "adherence_records"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    prescription_detail_id: Mapped[int] = mapped_column(
+    prescription_detail_id: Mapped[int | None] = mapped_column(
         Integer,
         ForeignKey("prescription_details.id", ondelete="CASCADE"),
-        nullable=False,
+        nullable=True,
     )
+    user_id: Mapped[int | None] = mapped_column(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=True,
+    )
+    medication_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
     scheduled_time: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     taken_at: Mapped[str | None] = mapped_column(String(30), nullable=True)
     status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: now_mx())
 
-    prescription_detail: Mapped["PrescriptionDetail"] = relationship(
+    prescription_detail: Mapped["PrescriptionDetail | None"] = relationship(
         back_populates="adherence_records"
     )
 

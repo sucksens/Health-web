@@ -2,7 +2,7 @@ import logging
 from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import select, func
+from sqlalchemy import select, func, or_
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import CurrentUser
@@ -145,7 +145,7 @@ def get_dashboard_summary(current_user: CurrentUser, db: Session = Depends(get_d
         today_start = now_naive.replace(hour=0, minute=0, second=0, microsecond=0)
         today_end = today_start.replace(hour=23, minute=59, second=59)
 
-        today_records = (
+        today_rx_records = (
             db.execute(
                 select(AdherenceRecord)
                 .join(PrescriptionDetail)
@@ -156,10 +156,27 @@ def get_dashboard_summary(current_user: CurrentUser, db: Session = Depends(get_d
                     AdherenceRecord.scheduled_time >= today_start,
                     AdherenceRecord.scheduled_time <= today_end,
                 )
-                .order_by(AdherenceRecord.scheduled_time)
             )
             .scalars()
             .all()
+        )
+
+        today_standalone_records = (
+            db.execute(
+                select(AdherenceRecord).where(
+                    AdherenceRecord.user_id == uid,
+                    AdherenceRecord.prescription_detail_id.is_(None),
+                    AdherenceRecord.scheduled_time >= today_start,
+                    AdherenceRecord.scheduled_time <= today_end,
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+        today_records = sorted(
+            list(today_rx_records) + list(today_standalone_records),
+            key=lambda r: r.scheduled_time,
         )
 
         today_total = len(today_records)
@@ -170,7 +187,7 @@ def get_dashboard_summary(current_user: CurrentUser, db: Session = Depends(get_d
         )
 
         seven_days_ago = now_naive - timedelta(days=7)
-        week_records = (
+        week_rx_records = (
             db.execute(
                 select(AdherenceRecord)
                 .join(PrescriptionDetail)
@@ -183,6 +200,18 @@ def get_dashboard_summary(current_user: CurrentUser, db: Session = Depends(get_d
             .scalars()
             .all()
         )
+        week_standalone_records = (
+            db.execute(
+                select(AdherenceRecord).where(
+                    AdherenceRecord.user_id == uid,
+                    AdherenceRecord.prescription_detail_id.is_(None),
+                    AdherenceRecord.scheduled_time >= seven_days_ago,
+                )
+            )
+            .scalars()
+            .all()
+        )
+        week_records = list(week_rx_records) + list(week_standalone_records)
         week_total = len(week_records)
         week_taken = sum(1 for r in week_records if r.status in ("taken", "late"))
         week_rate = round((week_taken / week_total) * 100, 1) if week_total else None

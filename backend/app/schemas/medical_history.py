@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class PatientProfileUpdate(BaseModel):
@@ -24,7 +24,7 @@ class PatientProfileOut(BaseModel):
     emergency_contact_phone: Optional[str]
     created_at: datetime
     updated_at: datetime
-
+    
     model_config = {"from_attributes": True}
 
 
@@ -238,9 +238,16 @@ class MedicalDocumentOut(BaseModel):
 
 
 class AdherenceRecordCreate(BaseModel):
-    prescription_detail_id: int
+    prescription_detail_id: Optional[int] = None
+    medication_name: Optional[str] = None
     scheduled_time: datetime
     notes: Optional[str] = None
+
+    @model_validator(mode="after")
+    def validate_source(self):
+        if not self.prescription_detail_id and not self.medication_name:
+            raise ValueError("Se requiere prescription_detail_id o medication_name")
+        return self
 
 
 class AdherenceRecordUpdate(BaseModel):
@@ -251,7 +258,7 @@ class AdherenceRecordUpdate(BaseModel):
 
 class AdherenceRecordOut(BaseModel):
     id: int
-    prescription_detail_id: int
+    prescription_detail_id: Optional[int] = None
     scheduled_time: datetime
     taken_at: Optional[str]
     status: str

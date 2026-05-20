@@ -11,7 +11,7 @@ from fastapi import (
     status,
 )
 from fastapi.responses import FileResponse
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.auth.dependencies import CurrentUser, require_permissions
@@ -846,6 +846,9 @@ def delete_document(
 
 def _enrich_record(record: AdherenceRecord) -> dict:
     detail = record.prescription_detail
+    med_name = detail.medication_name if detail else None
+    if not med_name:
+        med_name = record.medication_name
     return {
         "id": record.id,
         "prescription_detail_id": record.prescription_detail_id,
@@ -854,7 +857,7 @@ def _enrich_record(record: AdherenceRecord) -> dict:
         "status": record.status,
         "notes": record.notes,
         "created_at": record.created_at,
-        "medication_name": detail.medication_name if detail else None,
+        "medication_name": med_name,
     }
 
 
@@ -933,20 +936,40 @@ def get_today_adherence(current_user: CurrentUser, db: Session = Depends(get_db)
     today_start = now_mx().replace(hour=0, minute=0, second=0, microsecond=0)
     today_end = today_start.replace(hour=23, minute=59, second=59)
 
-    result = db.execute(
-        select(AdherenceRecord)
-        .join(PrescriptionDetail)
-        .join(Prescription)
-        .where(
-            Prescription.user_id == current_user.id,
-            PrescriptionDetail.status == "active",
-            AdherenceRecord.scheduled_time >= today_start,
-            AdherenceRecord.scheduled_time <= today_end,
+    rx_records = (
+        db.execute(
+            select(AdherenceRecord)
+            .join(PrescriptionDetail)
+            .join(Prescription)
+            .where(
+                Prescription.user_id == current_user.id,
+                PrescriptionDetail.status == "active",
+                AdherenceRecord.scheduled_time >= today_start,
+                AdherenceRecord.scheduled_time <= today_end,
+            )
         )
-        .order_by(AdherenceRecord.scheduled_time)
+        .scalars()
+        .all()
     )
-    records = result.scalars().all()
-    return [_enrich_record(r) for r in records]
+
+    standalone_records = (
+        db.execute(
+            select(AdherenceRecord).where(
+                AdherenceRecord.user_id == current_user.id,
+                AdherenceRecord.prescription_detail_id.is_(None),
+                AdherenceRecord.scheduled_time >= today_start,
+                AdherenceRecord.scheduled_time <= today_end,
+            )
+        )
+        .scalars()
+        .all()
+    )
+
+    all_records = sorted(
+        list(rx_records) + list(standalone_records),
+        key=lambda r: r.scheduled_time,
+    )
+    return [_enrich_record(r) for r in all_records]
 
 
 @router.get(
@@ -962,17 +985,41 @@ def get_adherence_history(
 ):
     _generate_today_records(current_user.id, db)
 
-    result = db.execute(
-        select(AdherenceRecord)
-        .join(PrescriptionDetail)
-        .join(Prescription)
-        .where(Prescription.user_id == current_user.id)
-        .order_by(AdherenceRecord.scheduled_time.desc())
-        .offset(skip)
-        .limit(limit)
+    rx_records = (
+        db.execute(
+            select(AdherenceRecord)
+            .join(PrescriptionDetail)
+            .join(Prescription)
+            .where(Prescription.user_id == current_user.id)
+            .order_by(AdherenceRecord.scheduled_time.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+        .scalars()
+        .all()
     )
-    records = result.scalars().all()
-    return [_enrich_record(r) for r in records]
+
+    standalone_records = (
+        db.execute(
+            select(AdherenceRecord)
+            .where(
+                AdherenceRecord.user_id == current_user.id,
+                AdherenceRecord.prescription_detail_id.is_(None),
+            )
+            .order_by(AdherenceRecord.scheduled_time.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+        .scalars()
+        .all()
+    )
+
+    all_records = sorted(
+        list(rx_records) + list(standalone_records),
+        key=lambda r: r.scheduled_time,
+        reverse=True,
+    )
+    return [_enrich_record(r) for r in all_records[:limit]]
 
 
 @router.post(
@@ -986,18 +1033,33 @@ def create_adherence_record(
     current_user: CurrentUser,
     db: Session = Depends(get_db),
 ):
-    detail = db.execute(
-        select(PrescriptionDetail)
-        .join(Prescription)
-        .where(
-            PrescriptionDetail.id == body.prescription_detail_id,
-            Prescription.user_id == current_user.id,
+    if body.prescription_detail_id:
+        detail = db.execute(
+            select(PrescriptionDetail)
+            .join(Prescription)
+            .where(
+                PrescriptionDetail.id == body.prescription_detail_id,
+                Prescription.user_id == current_user.id,
+            )
+        ).scalar_one_or_none()
+        if not detail:
+            raise HTTPException(
+                status_code=404, detail="Detalle de receta no encontrado"
+            )
+        record = AdherenceRecord(
+            prescription_detail_id=body.prescription_detail_id,
+            scheduled_time=body.scheduled_time,
+            notes=body.notes,
         )
-    ).scalar_one_or_none()
-    if not detail:
-        raise HTTPException(status_code=404, detail="Detalle de receta no encontrado")
+    else:
+        record = AdherenceRecord(
+            user_id=current_user.id,
+            medication_name=body.medication_name,
+            scheduled_time=body.scheduled_time,
+            notes=body.notes,
+            status="pending",
+        )
 
-    record = AdherenceRecord(**body.model_dump())
     db.add(record)
     db.flush()
     db.refresh(record)
@@ -1017,9 +1079,16 @@ def update_adherence_record(
 ):
     record = db.execute(
         select(AdherenceRecord)
-        .join(PrescriptionDetail)
-        .join(Prescription)
-        .where(AdherenceRecord.id == record_id, Prescription.user_id == current_user.id)
+        .outerjoin(
+            PrescriptionDetail,
+            AdherenceRecord.prescription_detail_id == PrescriptionDetail.id,
+        )
+        .outerjoin(Prescription, PrescriptionDetail.prescription_id == Prescription.id)
+        .where(
+            AdherenceRecord.id == record_id,
+            (Prescription.user_id == current_user.id)
+            | (AdherenceRecord.user_id == current_user.id),
+        )
     ).scalar_one_or_none()
     if not record:
         raise HTTPException(status_code=404, detail="Registro no encontrado")
