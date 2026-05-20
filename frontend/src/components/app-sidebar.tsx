@@ -13,7 +13,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import { RiWallet3Line, RiUser3Line, RiShieldLine, RiKey2Line, RiFileList2Line, RiUserSettingsLine, RiBodyScanLine, RiHeart2Line } from "@remixicon/react"
+import { RiWallet3Line, RiUser3Line, RiShieldLine, RiKey2Line, RiFileList2Line, RiUserSettingsLine, RiBodyScanLine, RiHeart2Line, RiHeartPulseLine } from "@remixicon/react"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user, hasPermission } = useAuth()
@@ -23,6 +23,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const hasPermissions = hasPermission("permissions:read")
   const hasActivity = hasPermission("activity:read")
   const hasBodyMetrics = hasPermission("body_metrics:read")
+  const hasBloodPressure = hasPermission("blood_pressure:read")
   const hasMedicalHistory = hasPermission("medical_history:read")
 
   const adminItems = [
@@ -88,6 +89,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           },
         ]
       : []),
+    ...(hasBloodPressure
+      ? [
+          {
+            title: "Presion Arterial",
+            url: "/blood-pressure",
+            icon: <RiHeartPulseLine />,
+            items: [
+              { title: "Historial de lecturas", url: "/blood-pressure" },
+            ],
+          },
+        ]
+      : []),
     ...(hasMedicalHistory
       ? [
           {
@@ -138,7 +151,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" tooltip="Health">
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                <RiHeart2Line className="size-4" />
+                <img src="/favicon.svg" alt="Health" className="size-5" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">Health</span>

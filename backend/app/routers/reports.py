@@ -1,5 +1,6 @@
 import io
 import matplotlib
+from pathlib import Path
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -27,6 +28,8 @@ from app.models.medical_history import (
 )
 from app.config.tz import now_mx
 
+_LOGO_PATH = Path(__file__).resolve().parent.parent / "static" / "logo.png"
+
 router = APIRouter(prefix="/reports", tags=["Reports"])
 
 plt.rcParams["font.size"] = 9
@@ -40,10 +43,18 @@ class ReportPDF(FPDF):
         self.set_auto_page_break(auto=True, margin=25)
 
     def header(self):
-        self.set_font("Helvetica", "B", 10)
-        self.set_text_color(80, 80, 80)
-        self.cell(0, 6, "Health Web", align="L")
-        self.cell(0, 6, self.doc_title, align="R", new_x="LMARGIN", new_y="NEXT")
+        if _LOGO_PATH.exists():
+            self.image(str(_LOGO_PATH), x=10, y=5, w=22)
+            self.set_xy(35, 8)
+            self.set_font("Helvetica", "B", 10)
+            self.set_text_color(80, 80, 80)
+            self.cell(0, 6, "Health Web", align="L")
+            self.cell(0, 6, self.doc_title, align="R", new_x="LMARGIN", new_y="NEXT")
+        else:
+            self.set_font("Helvetica", "B", 10)
+            self.set_text_color(80, 80, 80)
+            self.cell(0, 6, "Health Web", align="L")
+            self.cell(0, 6, self.doc_title, align="R", new_x="LMARGIN", new_y="NEXT")
         self.set_draw_color(200, 200, 200)
         self.line(10, self.get_y(), 200, self.get_y())
         self.ln(4)

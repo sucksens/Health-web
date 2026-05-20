@@ -44,7 +44,7 @@ export function LoginPage() {
     <div className="flex min-h-svh items-center justify-center p-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Health</CardTitle>
+          <img src="/logo.svg" alt="Health" className="mx-auto h-10 w-auto mb-2" />
           <CardDescription>
             Ingresa tus credenciales para continuar
           </CardDescription>
