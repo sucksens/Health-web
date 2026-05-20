@@ -16,6 +16,7 @@ from app.database.db import get_db
 from app.models.user import User
 from app.models.body_metric import BodyMetric
 from app.models.weight_goal import WeightGoal
+from app.models.blood_pressure import BloodPressure
 from app.models.medical_history import (
     PatientProfile,
     Doctor,
@@ -1045,3 +1046,268 @@ def report_patient_profile(
     pdf.label_value("Total documentos:", str(docs_count))
 
     return _build_response(pdf, f"ficha_paciente_{now_mx().strftime('%Y%m%d')}.pdf")
+
+
+# ── 7. Blood Pressure Report ───────────────────────────────────────────────
+
+_BP_CLASS_LABELS = {
+    "Normal": ("Estable", 76, 175, 80),
+    "Elevated": ("Elevada", 234, 179, 8),
+    "Stage 1": ("Alta (Etapa 1)", 249, 115, 22),
+    "Stage 2": ("Alta (Etapa 2)", 239, 68, 68),
+    "Crisis": ("Crisis", 185, 28, 28),
+}
+
+_HR_STATUS = {
+    "low": ("Bajo", 234, 179, 8),
+    "normal": ("Normal", 76, 175, 80),
+    "high": ("Alto", 239, 68, 68),
+}
+
+
+def _hr_status(hr: float) -> tuple[str, int, int, int]:
+    if hr < 60:
+        return _HR_STATUS["low"]
+    if hr <= 100:
+        return _HR_STATUS["normal"]
+    return _HR_STATUS["high"]
+
+
+def _bp_stat_card(
+    pdf: ReportPDF,
+    x: float,
+    y: float,
+    w: float,
+    h: float,
+    title: str,
+    value: str,
+    status: str,
+    rgb: tuple[int, int, int],
+):
+    pdf.set_fill_color(245, 247, 250)
+    pdf.rect(x, y, w, h, "F")
+    pdf.set_draw_color(220, 225, 235)
+    pdf.rect(x, y, w, h, "D")
+
+    pdf.set_xy(x + 3, y + 2)
+    pdf.set_font("Helvetica", "", 7)
+    pdf.set_text_color(100, 100, 100)
+    pdf.cell(w - 6, 4, title)
+
+    pdf.set_xy(x + 3, y + 7)
+    pdf.set_font("Helvetica", "B", 14)
+    pdf.set_text_color(30, 30, 30)
+    pdf.cell(w - 6, 8, value)
+
+    r, g, b = rgb
+    pdf.set_xy(x + 3, y + 17)
+    pdf.set_font("Helvetica", "B", 7)
+    pdf.set_fill_color(r, g, b)
+    pdf.set_text_color(255, 255, 255)
+    bw = pdf.get_string_width(status) + 6
+    pdf.cell(bw, 4, status, fill=True)
+
+
+@router.get(
+    "/blood-pressure",
+    dependencies=[Depends(require_permissions("blood_pressure:read"))],
+)
+def report_blood_pressure(
+    current_user: CurrentUser,
+    db: Session = Depends(get_db),
+    date_from: str | None = Query(None),
+    date_to: str | None = Query(None),
+):
+    from app.schemas.blood_pressure import classify_bp
+
+    df, dt = _parse_dates(date_from, date_to)
+    name = _user_name(current_user)
+
+    q = select(BloodPressure).where(BloodPressure.user_id == current_user.id)
+    if df:
+        q = q.where(BloodPressure.recorded_at >= df)
+    if dt:
+        q = q.where(BloodPressure.recorded_at <= dt)
+    q = q.order_by(BloodPressure.recorded_at)
+    readings = db.execute(q).scalars().all()
+
+    pdf = ReportPDF("Historial de Presion Arterial", name)
+    pdf.alias_nb_pages()
+    pdf.add_page()
+
+    pdf.set_font("Helvetica", "B", 9)
+    pdf.set_text_color(80, 80, 80)
+    pdf.cell(25, 5, "Paciente:")
+    pdf.set_font("Helvetica", "", 9)
+    pdf.set_text_color(30, 30, 30)
+    pdf.cell(80, 5, name)
+
+    pdf.set_font("Helvetica", "B", 9)
+    pdf.set_text_color(80, 80, 80)
+    pdf.cell(20, 5, "Periodo:")
+    pdf.set_font("Helvetica", "", 9)
+    pdf.set_text_color(30, 30, 30)
+    period = f"{_fmt_date(df) if df else 'Inicio'} - {_fmt_date(dt) if dt else 'Hoy'}"
+    pdf.cell(0, 5, period, new_x="LMARGIN", new_y="NEXT")
+
+    pdf.ln(2)
+    pdf.set_draw_color(200, 200, 200)
+    pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+    pdf.ln(4)
+
+    if not readings:
+        pdf.set_font("Helvetica", "I", 11)
+        pdf.set_text_color(130, 130, 130)
+        pdf.cell(0, 20, "Sin lecturas en el periodo seleccionado", align="C")
+        return _build_response(
+            pdf, f"presion_arterial_{now_mx().strftime('%Y%m%d')}.pdf"
+        )
+
+    sys_vals = [r.systolic for r in readings]
+    dia_vals = [r.diastolic for r in readings]
+    hr_vals = [r.heart_rate for r in readings if r.heart_rate]
+
+    avg_sys = sum(sys_vals) / len(sys_vals)
+    avg_dia = sum(dia_vals) / len(dia_vals)
+    avg_class = classify_bp(avg_sys, avg_dia)
+    avg_label, avg_r, avg_g, avg_b = _BP_CLASS_LABELS.get(
+        avg_class, ("-", 100, 100, 100)
+    )
+
+    max_idx = max(range(len(sys_vals)), key=lambda i: sys_vals[i])
+    min_idx = min(range(len(sys_vals)), key=lambda i: sys_vals[i])
+
+    card_y = pdf.get_y()
+    card_w = 90
+    card_h = 24
+    gap = 10
+
+    _bp_stat_card(
+        pdf,
+        10,
+        card_y,
+        card_w,
+        card_h,
+        "Promedio Presion Arterial",
+        f"{avg_sys:.0f}/{avg_dia:.0f} mmHg",
+        avg_label,
+        (avg_r, avg_g, avg_b),
+    )
+
+    if hr_vals:
+        avg_hr = sum(hr_vals) / len(hr_vals)
+        hr_label, hr_r, hr_g, hr_b = _hr_status(avg_hr)
+        _bp_stat_card(
+            pdf,
+            10 + card_w + gap,
+            card_y,
+            card_w,
+            card_h,
+            "Promedio Frecuencia Cardiaca",
+            f"{avg_hr:.0f} bpm",
+            hr_label,
+            (hr_r, hr_g, hr_b),
+        )
+
+    row2_y = card_y + card_h + 6
+    r_max = readings[max_idx]
+    r_min = readings[min_idx]
+    max_class = classify_bp(r_max.systolic, r_max.diastolic)
+    min_class = classify_bp(r_min.systolic, r_min.diastolic)
+    max_dt = _fmt_dt(r_max.recorded_at) if r_max.recorded_at else "-"
+    min_dt = _fmt_dt(r_min.recorded_at) if r_min.recorded_at else "-"
+
+    _bp_stat_card(
+        pdf,
+        10,
+        row2_y,
+        card_w,
+        card_h,
+        "Mayor Presion Arterial",
+        f"{r_max.systolic:.0f}/{r_max.diastolic:.0f} mmHg",
+        max_dt,
+        _BP_CLASS_LABELS.get(max_class, ("-", 100, 100, 100))[1:],
+    )
+
+    _bp_stat_card(
+        pdf,
+        10 + card_w + gap,
+        row2_y,
+        card_w,
+        card_h,
+        "Menor Presion Arterial",
+        f"{r_min.systolic:.0f}/{r_min.diastolic:.0f} mmHg",
+        min_dt,
+        _BP_CLASS_LABELS.get(min_class, ("-", 100, 100, 100))[1:],
+    )
+
+    pdf.set_y(row2_y + card_h + 4)
+    pdf.set_font("Helvetica", "", 8)
+    pdf.set_text_color(100, 100, 100)
+    pdf.cell(
+        0, 5, f"Total de registros: {len(readings)}", new_x="LMARGIN", new_y="NEXT"
+    )
+
+    if len(readings) >= 2:
+        pdf.ln(2)
+        pdf.section_title("Evolucion de Presion Arterial")
+        dates_r = [r.recorded_at for r in readings]
+        fig, ax = plt.subplots(figsize=(7, 3))
+        ax.plot(dates_r, sys_vals, "r-o", markersize=3, label="Sistolica")
+        ax.plot(dates_r, dia_vals, "b-o", markersize=3, label="Diastolica")
+        ax.axhline(
+            y=120, color="orange", linestyle=":", linewidth=0.7, label="120 (Elevated)"
+        )
+        ax.axhline(
+            y=130,
+            color="darkorange",
+            linestyle=":",
+            linewidth=0.7,
+            label="130 (Stage 1)",
+        )
+        ax.axhline(
+            y=140, color="red", linestyle=":", linewidth=0.7, label="140 (Stage 2)"
+        )
+        ax.axhline(
+            y=180, color="darkred", linestyle=":", linewidth=0.7, label="180 (Crisis)"
+        )
+        ax.axhline(
+            y=80,
+            color="cornflowerblue",
+            linestyle=":",
+            linewidth=0.7,
+            label="80 (Normal)",
+        )
+        ax.axhline(
+            y=90, color="blue", linestyle=":", linewidth=0.7, label="90 (Stage 1)"
+        )
+        ax.fill_between(dates_r, dia_vals, sys_vals, alpha=0.12, color="red")
+        ax.set_ylabel("mmHg", fontsize=9)
+        ax.tick_params(axis="x", rotation=30, labelsize=7)
+        ax.legend(fontsize=6.5, loc="upper left", ncol=2)
+        ax.set_title("Evolucion de Presion Arterial", fontsize=10)
+        ax.grid(True, alpha=0.3)
+        fig.tight_layout()
+        pdf.add_chart(fig)
+
+    pdf.add_page()
+    pdf.section_title("Registro de Mediciones")
+    pdf.add_table(
+        ["Fecha/Hora", "Sist.", "Diast.", "Pulso", "Categoria", "Notas"],
+        [
+            [
+                _fmt_dt(r.recorded_at)
+                if isinstance(r.recorded_at, datetime)
+                else str(r.recorded_at)[:16],
+                f"{r.systolic:.0f}",
+                f"{r.diastolic:.0f}",
+                str(r.heart_rate) if r.heart_rate else "-",
+                classify_bp(r.systolic, r.diastolic),
+                (r.notes or "-")[:28],
+            ]
+            for r in reversed(readings)
+        ],
+        [38, 18, 18, 18, 38, 60],
+    )
+
+    return _build_response(pdf, f"presion_arterial_{now_mx().strftime('%Y%m%d')}.pdf")

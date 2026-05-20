@@ -469,6 +469,7 @@ export interface DashboardSummary {
   recent_metrics: BodyMetricOut[]
   alerts: DashboardAlert[]
   admin_stats: AdminStats | null
+  latest_bp: BloodPressureOut | null
 }
 
 // ── Blood Pressure ──────────────────────────────────────────────────────────

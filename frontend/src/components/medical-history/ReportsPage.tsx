@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card"
 import {
   RiFilePdf2Line, RiUserHeartLine, RiScales2Line, RiFileTextLine,
-  RiCalendarScheduleLine, RiCapsuleLine, RiClipboardLine,
+  RiCalendarScheduleLine, RiCapsuleLine, RiClipboardLine, RiHeartPulseLine,
 } from "@remixicon/react"
 import { toast } from "sonner"
 
@@ -56,6 +56,14 @@ const reportTypes = [
     icon: RiClipboardLine,
     hasDateFilter: false,
   },
+  {
+    type: "blood-pressure",
+    title: "Presion Arterial",
+    desc: "Historial de lecturas con estadisticas, grafico y clasificacion",
+    icon: RiHeartPulseLine,
+    hasDateFilter: true,
+    permission: "blood_pressure:read",
+  },
 ]
 
 export function ReportsPage() {
@@ -65,6 +73,12 @@ export function ReportsPage() {
   const [loading, setLoading] = useState<string | null>(null)
 
   const canRead = hasPermission("medical_history:read")
+  const canReadBp = hasPermission("blood_pressure:read")
+
+  const visibleReports = reportTypes.filter((r) => {
+    if (r.permission === "blood_pressure:read") return canReadBp
+    return canRead
+  })
 
   const handleDownload = async (type: string) => {
     setLoading(type)
@@ -77,7 +91,7 @@ export function ReportsPage() {
     }
   }
 
-  if (!canRead) {
+  if (!canRead && !canReadBp) {
     return <div className="flex h-64 items-center justify-center text-muted-foreground">No tienes permisos</div>
   }
 
@@ -113,7 +127,7 @@ export function ReportsPage() {
       </Card>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {reportTypes.map((r) => {
+        {visibleReports.map((r) => {
           const Icon = r.icon
           const isLoading = loading === r.type
           return (

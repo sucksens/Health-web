@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator"
 import {
   RiWeightLine,
   RiHeart2Line,
+  RiHeartPulseLine,
   RiCapsuleLine,
   RiCalendarEventLine,
   RiArrowRightLine,
@@ -52,6 +53,17 @@ function getBmiCategory(
   if (bmi < 25) return { label: "Normal", variant: "default" }
   if (bmi < 30) return { label: "Sobrepeso", variant: "outline" }
   return { label: "Obesidad", variant: "destructive" }
+}
+
+function getBpClassColor(c: string): "default" | "secondary" | "destructive" | "outline" {
+  switch (c) {
+    case "Normal": return "default"
+    case "Elevated": return "secondary"
+    case "Stage 1": return "outline"
+    case "Stage 2": return "destructive"
+    case "Crisis": return "destructive"
+    default: return "secondary"
+  }
 }
 
 function ProgressBar({ value }: { value: number }) {
@@ -279,39 +291,36 @@ export function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="cursor-pointer" onClick={() => navigate("/blood-pressure")}>
           <CardHeader className="pb-2">
             <CardDescription className="flex items-center gap-1.5">
-              <RiCheckDoubleLine className="size-4" />
-              Adherencia hoy
+              <RiHeartPulseLine className="size-4" />
+              Presion arterial
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {data.today_adherence.length > 0 ? (
+            {data.latest_bp ? (
               <>
-                <div className="flex items-baseline gap-2">
-                  <p className="text-2xl font-bold">
-                    {data.today_adherence_rate?.toFixed(0) ?? 0}%
-                  </p>
-                  <span className="text-xs text-muted-foreground">
-                    {data.today_adherence.filter(
-                      (r) => r.status === "taken" || r.status === "late"
-                    ).length}
-                    /{data.today_adherence.length} dosis
-                  </span>
-                </div>
-                <div className="mt-2">
-                  <ProgressBar value={data.today_adherence_rate ?? 0} />
+                <p className="text-2xl font-bold">
+                  {data.latest_bp.systolic}/{data.latest_bp.diastolic}
+                  <span className="text-sm font-normal text-muted-foreground ml-1">mmHg</span>
+                </p>
+                <div className="mt-1 flex items-center gap-2">
+                  <Badge variant={getBpClassColor(data.latest_bp.classification)}>
+                    {data.latest_bp.classification}
+                  </Badge>
+                  {data.latest_bp.heart_rate && (
+                    <span className="text-xs text-muted-foreground">
+                      {data.latest_bp.heart_rate} bpm
+                    </span>
+                  )}
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {data.pending_doses_today} pendiente
-                  {data.pending_doses_today !== 1 ? "s" : ""} hoy
+                  {formatDate(data.latest_bp.recorded_at)}
                 </p>
               </>
             ) : (
-              <p className="text-sm text-muted-foreground">
-                Sin medicamentos activos
-              </p>
+              <p className="text-sm text-muted-foreground">Sin lecturas</p>
             )}
           </CardContent>
         </Card>

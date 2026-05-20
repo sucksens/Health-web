@@ -308,7 +308,7 @@ def get_dashboard_summary(current_user: CurrentUser, db: Session = Depends(get_d
         ).scalar_one_or_none()
 
         if latest_bp:
-            from app.schemas.blood_pressure import classify_bp
+            from app.schemas.blood_pressure import BloodPressureOut, classify_bp
 
             bp_class = classify_bp(latest_bp.systolic, latest_bp.diastolic)
             if bp_class == "Crisis":
@@ -416,6 +416,10 @@ def get_dashboard_summary(current_user: CurrentUser, db: Session = Depends(get_d
 
         recent_metrics_out = [_metric_out(m) for m in reversed(recent_orms)]
 
+        bp_out = None
+        if latest_bp:
+            bp_out = BloodPressureOut.from_orm(latest_bp)
+
         return DashboardSummary(
             latest_metric=latest_metric,
             active_goal=goal_out,
@@ -428,6 +432,7 @@ def get_dashboard_summary(current_user: CurrentUser, db: Session = Depends(get_d
             recent_metrics=recent_metrics_out,
             alerts=alerts,
             admin_stats=admin_stats,
+            latest_bp=bp_out,
         )
     except Exception:
         logger.exception("Error in dashboard summary")

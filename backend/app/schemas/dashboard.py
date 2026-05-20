@@ -4,6 +4,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 from app.schemas.body_metric import BodyMetricOut
+from app.schemas.blood_pressure import BloodPressureOut
 from app.schemas.weight_goal import WeightGoalWithProgress
 from app.schemas.medical_history import AppointmentOut, AdherenceRecordOut
 
@@ -35,3 +36,4 @@ class DashboardSummary(BaseModel):
     recent_metrics: list[BodyMetricOut] = []
     alerts: list[DashboardAlert] = []
     admin_stats: Optional[AdminStats] = None
+    latest_bp: Optional[BloodPressureOut] = None

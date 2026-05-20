@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/lib/auth"
-import { bloodPressureApi } from "@/lib/api"
+import { bloodPressureApi, medicalHistoryApi } from "@/lib/api"
 import type { BloodPressureOut, BloodPressureStats } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -30,7 +30,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { BloodPressureChart } from "./BloodPressureChart"
-import { RiAddLine, RiPencilLine, RiDeleteBinLine, RiHeartPulseLine } from "@remixicon/react"
+import { RiAddLine, RiPencilLine, RiDeleteBinLine, RiHeartPulseLine, RiFileDownloadLine } from "@remixicon/react"
 import { toast } from "sonner"
 
 function classifyBP(systolic: number, diastolic: number): string {
@@ -80,6 +80,10 @@ export function BloodPressurePage() {
   const [formNotes, setFormNotes] = useState("")
   const [formDate, setFormDate] = useState("")
   const [saving, setSaving] = useState(false)
+  const [showPdfDialog, setShowPdfDialog] = useState(false)
+  const [pdfDateFrom, setPdfDateFrom] = useState("")
+  const [pdfDateTo, setPdfDateTo] = useState("")
+  const [downloadingPdf, setDownloadingPdf] = useState(false)
 
   const fetchReadings = useCallback(async () => {
     try {
@@ -105,6 +109,22 @@ export function BloodPressurePage() {
       fetchStats()
     }
   }, [canRead, fetchReadings, fetchStats])
+
+  const handleDownloadPdf = async () => {
+    setDownloadingPdf(true)
+    try {
+      await medicalHistoryApi.reports.download(
+        "blood-pressure",
+        pdfDateFrom || undefined,
+        pdfDateTo || undefined,
+      )
+      setShowPdfDialog(false)
+    } catch (err: any) {
+      toast.error(err.detail || "Error al generar reporte")
+    } finally {
+      setDownloadingPdf(false)
+    }
+  }
 
   if (!canRead) {
     return (
@@ -133,9 +153,14 @@ export function BloodPressurePage() {
     setFormDiastolic(String(r.diastolic))
     setFormHeartRate(r.heart_rate ? String(r.heart_rate) : "")
     setFormNotes(r.notes || "")
-    const d = new Date(r.recorded_at)
-    d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
-    setFormDate(d.toISOString().slice(0, 16))
+    const iso = r.recorded_at
+    if (iso.endsWith("Z")) {
+      const d = new Date(iso)
+      d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
+      setFormDate(d.toISOString().slice(0, 16))
+    } else {
+      setFormDate(iso.slice(0, 16))
+    }
     setShowDialog(true)
   }
 
@@ -158,7 +183,7 @@ export function BloodPressurePage() {
         diastolic: dia,
         heart_rate: formHeartRate ? parseInt(formHeartRate) : null,
         notes: formNotes || null,
-        recorded_at: formDate ? new Date(formDate).toISOString() : null,
+        recorded_at: formDate ? formDate + ":00" : null,
       }
 
       if (editReading) {
@@ -210,10 +235,18 @@ export function BloodPressurePage() {
           </p>
         </div>
         {canCreate && (
-          <Button onClick={handleCreate}>
-            <RiAddLine className="size-4" />
-            Nueva lectura
-          </Button>
+          <div className="flex gap-2">
+            {readings.length > 0 && (
+              <Button variant="outline" onClick={() => { setPdfDateFrom(""); setPdfDateTo(""); setShowPdfDialog(true) }}>
+                <RiFileDownloadLine className="size-4" />
+                Reporte PDF
+              </Button>
+            )}
+            <Button onClick={handleCreate}>
+              <RiAddLine className="size-4" />
+              Nueva lectura
+            </Button>
+          </div>
         )}
       </div>
 
@@ -468,6 +501,44 @@ export function BloodPressurePage() {
             </Button>
             <Button onClick={handleSave} disabled={saving}>
               {saving ? "Guardando..." : "Guardar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showPdfDialog} onOpenChange={setShowPdfDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reporte PDF - Presion Arterial</DialogTitle>
+            <DialogDescription>
+              Selecciona un rango de fechas. Dejar vacio para incluir todo el historial.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4 py-4">
+            <div className="space-y-2">
+              <Label>Desde</Label>
+              <Input
+                type="date"
+                value={pdfDateFrom}
+                onChange={(e) => setPdfDateFrom(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Hasta</Label>
+              <Input
+                type="date"
+                value={pdfDateTo}
+                onChange={(e) => setPdfDateTo(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPdfDialog(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleDownloadPdf} disabled={downloadingPdf}>
+              <RiFileDownloadLine className="size-4 mr-1" />
+              {downloadingPdf ? "Generando..." : "Descargar PDF"}
             </Button>
           </DialogFooter>
         </DialogContent>
