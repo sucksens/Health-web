@@ -41,6 +41,10 @@ _PERMISSIONS = [
     ("medical_history:read", "Leer registros medicos", "medical_history"),
     ("medical_history:update", "Actualizar registros medicos", "medical_history"),
     ("medical_history:delete", "Eliminar registros medicos", "medical_history"),
+    ("blood_pressure:create", "Registrar presion arterial", "blood_pressure"),
+    ("blood_pressure:read", "Leer presion arterial", "blood_pressure"),
+    ("blood_pressure:update", "Actualizar presion arterial", "blood_pressure"),
+    ("blood_pressure:delete", "Eliminar presion arterial", "blood_pressure"),
 ]
 
 _ADMIN_PERMISSIONS = {p[0] for p in _PERMISSIONS}
@@ -59,6 +63,10 @@ _MANAGER_PERMISSIONS = {
     "medical_history:read",
     "medical_history:update",
     "medical_history:delete",
+    "blood_pressure:create",
+    "blood_pressure:read",
+    "blood_pressure:update",
+    "blood_pressure:delete",
 }
 _USER_PERMISSIONS = {
     "body_metrics:create",
@@ -73,6 +81,10 @@ _USER_PERMISSIONS = {
     "medical_history:read",
     "medical_history:update",
     "medical_history:delete",
+    "blood_pressure:create",
+    "blood_pressure:read",
+    "blood_pressure:update",
+    "blood_pressure:delete",
 }
 
 _ROLE_PERMISSIONS = {

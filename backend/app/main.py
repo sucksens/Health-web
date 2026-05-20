@@ -8,6 +8,7 @@ from app.config.settings import settings
 from app.routers import (
     activity,
     auth,
+    blood_pressure,
     body_metrics,
     dashboard,
     medical_history,
@@ -40,6 +41,7 @@ app.add_middleware(
 api_prefix = "/api/v1"
 
 app.include_router(auth, prefix=api_prefix)
+app.include_router(blood_pressure, prefix=api_prefix)
 app.include_router(dashboard, prefix=api_prefix)
 app.include_router(users, prefix=api_prefix)
 app.include_router(roles, prefix=api_prefix)

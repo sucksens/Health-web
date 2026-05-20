@@ -1,5 +1,6 @@
 from app.routers.activity import router as activity
 from app.routers.auth import router as auth
+from app.routers.blood_pressure import router as blood_pressure
 from app.routers.body_metrics import router as body_metrics
 from app.routers.dashboard import router as dashboard
 from app.routers.medical_history import router as medical_history

@@ -1,4 +1,5 @@
 from app.models.activity_log import ActivityLog
+from app.models.blood_pressure import BloodPressure
 from app.models.body_metric import BodyMetric
 from app.models.user import User
 from app.models.role import Role
@@ -20,6 +21,7 @@ from app.models.medical_history import (
 
 __all__ = [
     "ActivityLog",
+    "BloodPressure",
     "BodyMetric",
     "User",
     "Role",
