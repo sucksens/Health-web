@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="logo.svg" alt="Health Web" width="280" />
+</div>
+
 # Health Web
 
 Sistema web personal de gestion de salud construido con **FastAPI** (backend) y **Astro + React** (frontend). Permite gestionar metricas corporales, metas de peso, historial medico, citas, recetas, medicamentos, documentos y adherencia a tratamientos, con generacion de reportes en PDF.
