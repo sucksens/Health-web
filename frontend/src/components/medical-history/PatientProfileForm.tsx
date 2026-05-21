@@ -28,7 +28,7 @@ export function PatientProfileForm() {
   const { hasPermission } = useAuth()
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [profile, setProfile] = useState<PatientProfileOut | null>(null)
+  const [, setProfile] = useState<PatientProfileOut | null>(null)
 
   const [dob, setDob] = useState("")
   const [allergies, setAllergies] = useState("")

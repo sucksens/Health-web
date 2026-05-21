@@ -140,7 +140,7 @@ async function request<T>(
     try {
       const body = await res.json()
       detail = body.detail || JSON.stringify(body)
-    } catch {}
+    } catch { /* no-op */ }
     throw new ApiError(res.status, detail)
   }
 
@@ -590,7 +590,7 @@ export const medicalHistoryApi = {
       })
       if (!res.ok) {
         let detail = "Error al subir archivo"
-        try { const b = await res.json(); detail = b.detail || detail } catch {}
+        try { const b = await res.json(); detail = b.detail || detail } catch { /* no-op */ }
         throw new ApiError(res.status, detail)
       }
       return res.json()
@@ -605,7 +605,7 @@ export const medicalHistoryApi = {
       })
       if (!res.ok) {
         let detail = "Error al descargar archivo"
-        try { const b = await res.json(); detail = b.detail || detail } catch {}
+        try { const b = await res.json(); detail = b.detail || detail } catch { /* no-op */ }
         throw new ApiError(res.status, detail)
       }
       const contentDisposition = res.headers.get("content-disposition")
@@ -659,7 +659,7 @@ export const medicalHistoryApi = {
       })
       if (!res.ok) {
         let detail = "Error al generar reporte"
-        try { const b = await res.json(); detail = b.detail || detail } catch {}
+        try { const b = await res.json(); detail = b.detail || detail } catch { /* no-op */ }
         throw new ApiError(res.status, detail)
       }
       const contentDisposition = res.headers.get("content-disposition")

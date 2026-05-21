@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { RiEditLine, RiDeleteBinLine, RiCheckboxCircleLine, RiCloseCircleLine, RiArrowUpLine } from "@remixicon/react"
+import { RiEditLine, RiDeleteBinLine, RiCheckboxCircleLine, RiCloseCircleLine } from "@remixicon/react"
 
 interface WeightGoalCardProps {
   goal: WeightGoalWithProgress

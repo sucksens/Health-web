@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "@/lib/router"
 import { useAuth } from "@/lib/auth"
 import { medicalHistoryApi } from "@/lib/api"
-import type { DoctorOut, MedicationOut, PrescriptionOut, PrescriptionDetailCreate } from "@/lib/types"
+import type { DoctorOut, MedicationOut, PrescriptionOut } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -12,7 +12,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select"
-import { RiAddLine, RiDeleteBinLine, RiArrowLeftLine, RiTimeLine, RiUploadLine, RiFileLine, RiCheckLine, RiDownloadLine } from "@remixicon/react"
+import { RiAddLine, RiDeleteBinLine, RiArrowLeftLine, RiUploadLine, RiFileLine, RiCheckLine, RiDownloadLine } from "@remixicon/react"
 import { toast } from "sonner"
 
 interface DetailRow {

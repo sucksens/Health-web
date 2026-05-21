@@ -20,7 +20,7 @@ import {
   RiCapsuleLine,
   RiCalendarEventLine,
   RiArrowRightLine,
-  RiCheckDoubleLine,
+
   RiGroupLine,
   RiFileChartLine,
   RiTimeLine,

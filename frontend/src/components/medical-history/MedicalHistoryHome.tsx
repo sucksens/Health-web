@@ -2,7 +2,6 @@ import { useAuth } from "@/lib/auth"
 import { useNavigate } from "@/lib/router"
 import {
   Card,
-  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,

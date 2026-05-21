@@ -71,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(
     async (data: LoginRequest) => {
-      const response = await authApi.login(data)
+      await authApi.login(data)
       await refreshUser()
       const user = JSON.parse(localStorage.getItem("user") || "{}")
       return user.must_change_password ? "must_change_password" : "success"
@@ -89,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     try {
       await authApi.logout()
-    } catch {}
+    } catch { /* no-op */ }
     setUser(null)
     setPermissions(new Set())
   }, [])

@@ -13,7 +13,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import { RiWallet3Line, RiUser3Line, RiShieldLine, RiKey2Line, RiFileList2Line, RiUserSettingsLine, RiBodyScanLine, RiHeart2Line, RiHeartPulseLine } from "@remixicon/react"
+import { RiWallet3Line, RiUser3Line, RiShieldLine, RiKey2Line, RiFileList2Line, RiBodyScanLine, RiHeart2Line, RiHeartPulseLine } from "@remixicon/react"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user, hasPermission } = useAuth()

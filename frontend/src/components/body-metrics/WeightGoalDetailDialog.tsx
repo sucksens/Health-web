@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import { weightGoalsApi } from "@/lib/api"
 import type { WeightGoalWithProgress, BodyMetricOut } from "@/lib/types"
 import ReactECharts from "echarts-for-react"
-import { Button } from "@/components/ui/button"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Table,
@@ -31,13 +31,6 @@ function formatDate(iso: string): string {
   return d.toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" })
 }
 
-function getBmiCategory(bmi: number): string {
-  if (bmi < 18.5) return "Bajo peso"
-  if (bmi < 25) return "Normal"
-  if (bmi < 30) return "Sobrepeso"
-  return "Obesidad"
-}
-
 export function WeightGoalDetailDialog({
   open,
   onOpenChange,
@@ -45,7 +38,7 @@ export function WeightGoalDetailDialog({
 }: WeightGoalDetailDialogProps) {
   const [goal, setGoal] = useState<WeightGoalWithProgress | null>(null)
   const [metrics, setMetrics] = useState<BodyMetricOut[]>([])
-  const [loading, setLoading] = useState(false)
+  const [, setLoading] = useState(false)
 
   useEffect(() => {
     if (open && goalId) {

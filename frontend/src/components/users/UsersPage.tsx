@@ -96,7 +96,7 @@ export function UsersPage() {
     try {
       const roles = await rolesApi.list()
       setAllRoles(roles)
-    } catch {}
+    } catch { /* no-op */ }
     setShowCreate(true)
   }
 

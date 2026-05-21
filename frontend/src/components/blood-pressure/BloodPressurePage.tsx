@@ -110,14 +110,14 @@ export function BloodPressurePage() {
     try {
       const data = await bloodPressureApi.stats(filterFrom, filterTo)
       setStats(data)
-    } catch {}
+    } catch { /* no-op */ }
   }, [filterFrom, filterTo])
 
   const fetchLatest = useCallback(async () => {
     try {
       const data = await bloodPressureApi.getLatest()
       setLatestReading(data)
-    } catch {}
+    } catch { /* no-op */ }
   }, [])
 
   useEffect(() => {
