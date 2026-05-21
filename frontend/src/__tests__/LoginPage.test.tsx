@@ -39,7 +39,7 @@ describe("LoginPage", () => {
 
   it("renders the login form", () => {
     renderLogin()
-    expect(screen.getByText("Health")).toBeInTheDocument()
+    expect(screen.getByAltText("Health")).toBeInTheDocument()
     expect(screen.getByLabelText("Usuario")).toBeInTheDocument()
     expect(screen.getByLabelText("Contrasena")).toBeInTheDocument()
     expect(screen.getByRole("button", { name: /iniciar sesion/i })).toBeInTheDocument()

@@ -9,11 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Workflow CI/CD para GitHub Actions con lint, test y publicacion de imagenes
+- Workflow CI/CD para GitHub Actions con lint, test y publicacion de imagenes Docker a GHCR
 - En push/PR a main: ruff check, pytest, eslint, astro check, vitest
 - En tag v*.*.*: build y push automatico de imagenes Docker a GHCR
 - Cache de dependencias pip y npm en CI para builds mas rapidos
 - Imagenes publicadas: `ghcr.io/<owner>/health-backend:<version>` y `ghcr.io/<owner>/health-frontend:<version>`
+
+### Fixed
+
+- Error TypeScript ts(2367) en LoginPage: login() retornaba `Promise<void>` pero el resultado se comparaba con un string
+- Error TypeScript ts(2345) en BloodPressurePage: body tipado como `Record<string, any>` en vez de `BloodPressureCreate`
+- Advertencias ts(6385) por `FormEvent` deprecado en LoginPage, RegisterPage y ForcePasswordChangePage
+- Test LoginPage fallaba al buscar texto "Health" cuando el componente usa `<img alt="Health">`
 
 ---
 

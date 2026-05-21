@@ -1,5 +1,4 @@
-import { useState } from "react"
-import type React from "react"
+import { useState, type FormEvent } from "react"
 import { useAuth } from "@/lib/auth"
 import { useNavigate } from "@/lib/router"
 import { isValidEmail } from "@/lib/utils"
@@ -23,7 +22,7 @@ export function RegisterPage() {
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!isValidEmail(email)) {
       setEmailError("Ingresa un correo electronico valido")

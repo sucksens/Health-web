@@ -64,3 +64,6 @@ credentials.json
 .agents/
 skills-lock.json
 plans/
+
+# Test ci-local
+scripts/

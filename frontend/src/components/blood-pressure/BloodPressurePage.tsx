@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "@/lib/auth"
 import { bloodPressureApi, medicalHistoryApi } from "@/lib/api"
-import type { BloodPressureOut, BloodPressureStats } from "@/lib/types"
+import type { BloodPressureCreate, BloodPressureOut, BloodPressureStats } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -196,7 +196,7 @@ export function BloodPressurePage() {
 
     setSaving(true)
     try {
-      const body: Record<string, any> = {
+      const body: BloodPressureCreate = {
         systolic: sys,
         diastolic: dia,
         heart_rate: formHeartRate ? parseInt(formHeartRate) : null,

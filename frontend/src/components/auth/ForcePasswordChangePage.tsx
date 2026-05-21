@@ -1,5 +1,4 @@
-import { useState } from "react"
-import type React from "react"
+import { useState, type FormEvent } from "react"
 import { useNavigate } from "@/lib/router"
 import { authApi } from "@/lib/api"
 import { Button } from "@/components/ui/button"
@@ -25,7 +24,7 @@ export function ForcePasswordChangePage({ onPasswordChanged }: ForcePasswordChan
   const [passwordError, setPasswordError] = useState("")
   const [loading, setLoading] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setPasswordError("")
 

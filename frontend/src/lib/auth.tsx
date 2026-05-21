@@ -13,7 +13,7 @@ interface AuthContextType {
   user: AuthUser | null
   loading: boolean
   permissions: Set<string>
-  login: (data: LoginRequest) => Promise<void>
+  login: (data: LoginRequest) => Promise<"must_change_password" | "success">
   register: (data: RegisterRequest) => Promise<void>
   logout: () => Promise<void>
   hasPermission: (perm: string) => boolean
