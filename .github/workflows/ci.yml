@@ -42,7 +42,7 @@ jobs:
         env:
           DB_ENGINE: sqlite
           DATABASE_URL: sqlite:///test.db
-          JWT_SECRET_KEY: test-secret-key-for-ci-only
+          JWT_SECRET_KEY: test-secret-key-for-ci-only-that-is-long-enough-32chars
 
       - name: Setup Node 22
         uses: actions/setup-node@v4
