@@ -10,7 +10,6 @@ from app.schemas.blood_pressure import (
     BloodPressureOut,
     BloodPressureListResponse,
     BloodPressureUpdate,
-    classify_bp,
 )
 from app.config.tz import now_mx
 from datetime import datetime, timedelta

@@ -1,6 +1,6 @@
 import os
 import pytest
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 os.environ.setdefault(
@@ -26,6 +26,14 @@ def engine():
     import app.models  # noqa: F401
 
     Base.metadata.create_all(bind=eng)
+    with eng.connect() as conn:
+        conn.execute(
+            text(
+                "CREATE TABLE IF NOT EXISTS seed_version "
+                "(version VARCHAR(20) PRIMARY KEY, applied_at DATETIME DEFAULT CURRENT_TIMESTAMP)"
+            )
+        )
+        conn.commit()
     yield eng
     Base.metadata.drop_all(bind=eng)
     eng.dispose()

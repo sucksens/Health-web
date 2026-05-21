@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, date, timezone
+from datetime import datetime, date
 
 from sqlalchemy import Float, Integer, DateTime, ForeignKey, String, Date
 from sqlalchemy.orm import Mapped, mapped_column, relationship

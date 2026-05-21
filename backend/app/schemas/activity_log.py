@@ -1,10 +1,8 @@
-import json
 from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel
 
-from app.schemas.role import RoleOut
 
 
 class ActivityLogOut(BaseModel):

@@ -1,0 +1,5 @@
+[lint]
+ignore = ["F821"]
+
+[lint.per-file-ignores]
+"app/routers/__init__.py" = ["F401"]

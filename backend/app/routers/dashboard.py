@@ -2,7 +2,7 @@ import logging
 from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import select, func, or_
+from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import CurrentUser
@@ -369,7 +369,7 @@ def get_dashboard_summary(current_user: CurrentUser, db: Session = Depends(get_d
             )
             active_users = (
                 db.execute(
-                    select(func.count()).select_from(User).where(User.is_active == True)
+                    select(func.count()).select_from(User).where(User.is_active)
                 ).scalar()
                 or 0
             )

@@ -674,10 +674,6 @@ def report_appointments(
     )
     doc_map = {d.id: d.name for d in doctors}
 
-    specialties = db.execute(
-        select(PatientProfile).where(PatientProfile.user_id == current_user.id)
-    ).scalar_one_or_none()
-
     pdf = ReportPDF("Historial de Citas", name)
     pdf.alias_nb_pages()
     pdf.add_page()

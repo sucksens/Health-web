@@ -1,4 +1,4 @@
-from datetime import datetime, timezone, timedelta
+from datetime import timedelta
 
 from fastapi import (
     APIRouter,
@@ -11,7 +11,7 @@ from fastapi import (
     status,
 )
 from fastapi.responses import FileResponse
-from sqlalchemy import or_, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.auth.dependencies import CurrentUser, require_permissions
@@ -56,7 +56,7 @@ from app.schemas.medical_history import (
 from app.services import log_activity
 from app.storage import save_upload, delete_file
 from app.config.tz import now_mx
-from app.config.adherence import parse_frequency_to_hours, doses_per_day
+from app.config.adherence import parse_frequency_to_hours
 
 router = APIRouter(prefix="/medical-history", tags=["Medical History"])
 

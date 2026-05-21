@@ -1,10 +1,10 @@
-from app.routers.activity import router as activity
-from app.routers.auth import router as auth
-from app.routers.blood_pressure import router as blood_pressure
-from app.routers.body_metrics import router as body_metrics
-from app.routers.dashboard import router as dashboard
-from app.routers.medical_history import router as medical_history
-from app.routers.permissions import router as permissions
-from app.routers.roles import router as roles
-from app.routers.users import router as users
-from app.routers.weight_goals import router as weight_goals
+from app.routers.activity import router as activity  # noqa: F401
+from app.routers.auth import router as auth  # noqa: F401
+from app.routers.blood_pressure import router as blood_pressure  # noqa: F401
+from app.routers.body_metrics import router as body_metrics  # noqa: F401
+from app.routers.dashboard import router as dashboard  # noqa: F401
+from app.routers.medical_history import router as medical_history  # noqa: F401
+from app.routers.permissions import router as permissions  # noqa: F401
+from app.routers.roles import router as roles  # noqa: F401
+from app.routers.users import router as users  # noqa: F401
+from app.routers.weight_goals import router as weight_goals  # noqa: F401

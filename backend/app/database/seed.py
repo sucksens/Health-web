@@ -19,8 +19,11 @@ def _read_version() -> str:
 
 
 def _get_applied_versions(db: Session) -> set[str]:
-    result = db.execute(text("SELECT version FROM seed_version")).scalars().all()
-    return set(result)
+    try:
+        result = db.execute(text("SELECT version FROM seed_version")).scalars().all()
+        return set(result)
+    except Exception:
+        return set()
 
 
 def _mark_applied(db: Session, version: str) -> None:

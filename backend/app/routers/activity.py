@@ -38,7 +38,7 @@ def list_activity(
     q = q.offset(skip).limit(limit)
     logs = db.execute(q).scalars().all()
 
-    user_ids = {l.user_id for l in logs if l.user_id is not None}
+    user_ids = {log.user_id for log in logs if log.user_id is not None}
     users_map: dict[int, str] = {}
     if user_ids:
         users = db.execute(select(User).where(User.id.in_(user_ids))).scalars().all()
