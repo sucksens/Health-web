@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-05-20
+
+### Added
+
+- Vista de Presion Arterial con filtro por rango de fechas (default: mes en curso)
+- Endpoint `GET /blood-pressure` con parametros `date_from`/`date_to` y respuesta `{items, total}`
+- Endpoint `GET /blood-pressure/stats` con filtros de fecha y agregaciones SQL (sin cargar todos los registros en memoria)
+- Boton "Mes actual" para resetear el filtro de fechas en la vista de presion arterial
+- Contador de registros en el rango visible en la tabla de historial
+- `backend/start.sh` script de inicio que espera MySQL, corre migraciones, ejecuta seed y lanza Uvicorn
+- Tabla `seed_version` para rastrear que versiones de seed se han aplicado a la base de datos
+- Sistema de migraciones de seed versionadas en `seed.py` con `SEED_MIGRATIONS` dict
+- Contraccion automatica de permisos: los roles se sincronizan para remover permisos obsoletos
+- Actualizacion automatica de descripciones de permisos existentes durante el seed
+- `backend/healthcheck` endpoint para Docker healthcheck
+- Healthcheck en el servicio backend de Docker Compose con `start_period: 45s`
+- Frontend espera a que el backend este healthy antes de iniciar (`condition: service_healthy`)
+- Indice compuesto `(user_id, recorded_at)` en `blood_pressure_readings` para optimizar queries
+- Migracion Alembic `0007_add_bp_composite_index`
+- Migracion Alembic `0008_add_seed_version_table`
+- Dependencia `cryptography>=44.0` en `requirements.txt` para autenticacion MySQL 8.0
+- `.env.version` con VERSION para interpolacion en Docker Compose
+- `manage.sh` script helper con comandos `build`, `upgrade`, `publish`
+- Imagenes Docker se taguean con la version del proyecto (`health-backend:0.5.0`, `health-frontend:0.5.0`)
+
+### Fixed
+
+- CSS global no se cargaba en produccion: reemplazado `<link>` raw por `import "@/styles/global.css"` en layout Astro
+- `pymysql` fallaba al conectar MySQL 8.0 por falta de `cryptography` para `caching_sha2_password`
+- Seed se ejecutaba en cada inicio sin rastrear que ya se habia aplicado
+
+---
+
 ## [0.4.0] - 2026-05-19
 
 ### Added
