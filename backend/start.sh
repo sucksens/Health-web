@@ -10,9 +10,9 @@ for i in range(30):
     try:
         conn = pymysql.connect(
             host='mysql',
-            user='health_user',
-            password='health_pass',
-            database='health_db',
+            user=os.environ.get('MYSQL_USER', 'health_user'),
+            password=os.environ.get('MYSQL_PASSWORD', 'health_pass'),
+            database=os.environ.get('MYSQL_DATABASE', 'health_db'),
             connect_timeout=5,
         )
         conn.close()

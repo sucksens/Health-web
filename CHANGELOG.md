@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1] - 2026-05-21
+
+### Fixed
+
+- `start.sh` usaba credenciales hardcodeadas (`health_pass`) para esperar MySQL, ignorando las variables de entorno del `.env`
+- Agregado `DATABASE_URL` requerido en `.env` para que el backend se conecte a MySQL correctamente
+- Proteccion contra CRLF en `start.sh` con `sed` en el Dockerfile
+- `.gitattributes` fuerza LF en archivos `*.sh` para compatibilidad Windows/Linux
+
+---
+
 ## [0.6.0] - 2026-05-20
 
 ### Added
