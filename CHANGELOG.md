@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-05-20
+
+### Added
+
+- Workflow CI/CD para GitHub Actions con lint, test y publicacion de imagenes
+- En push/PR a main: ruff check, pytest, eslint, astro check, vitest
+- En tag v*.*.*: build y push automatico de imagenes Docker a GHCR
+- Cache de dependencias pip y npm en CI para builds mas rapidos
+- Imagenes publicadas: `ghcr.io/<owner>/health-backend:<version>` y `ghcr.io/<owner>/health-frontend:<version>`
+
+---
+
 ## [0.5.0] - 2026-05-20
 
 ### Added
