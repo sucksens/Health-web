@@ -1,5 +1,8 @@
 FROM node:22-alpine AS build
 
+ARG PUBLIC_API_URL=/api/v1
+ENV PUBLIC_API_URL=$PUBLIC_API_URL
+
 WORKDIR /app
 
 COPY package-lock.json package.json ./

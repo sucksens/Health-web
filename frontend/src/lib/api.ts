@@ -56,7 +56,7 @@ import type {
   DashboardSummary,
 } from "./types"
 
-const API_BASE = import.meta.env.API_URL || "http://localhost:8000/api/v1"
+const API_BASE = import.meta.env.PUBLIC_API_URL || "http://localhost:8000/api/v1"
 
 class ApiError extends Error {
   status: number

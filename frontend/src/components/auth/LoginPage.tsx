@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react"
+import { useState, type SubmitEvent } from "react"
 import { useAuth } from "@/lib/auth"
 import { useNavigate } from "@/lib/router"
 import { Button } from "@/components/ui/button"
@@ -19,7 +19,7 @@ export function LoginPage() {
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
     try {
