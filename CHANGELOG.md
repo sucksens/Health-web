@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.2] - 2026-05-21
+
+### Added
+
+- Badges de CI/CD, releases y licencia en el README
+- `frontend/.env.production` con `PUBLIC_API_URL=/api/v1` para builds de produccion
+- `frontend/.env.development` con `PUBLIC_API_URL=http://localhost:8000/api/v1` para desarrollo local
+- Build arg `PUBLIC_API_URL` en `frontend/Dockerfile` para inyectar la URL de la API durante el build
+- Build arg en `docker-compose.yml` para el servicio frontend
+- Dominio placeholder `https://salud.tudominio.com` en CORS de `.env.docker` para produccion con Nginx Proxy Manager
+
+### Fixed
+
+- Variable de entorno `API_URL` renombrada a `PUBLIC_API_URL` (requerido por Astro para exponer env vars al cliente con `client:only="react"`)
+- En produccion Docker el frontend usaba `http://localhost:8000/api/v1` (inaccesible desde el navegador del usuario) en vez de la ruta relativa `/api/v1` que resuelve el nginx interno
+- Puerto incorrecto `5173` (Vite legacy) por `4321` (Astro) en `backend/.env.example`
+- Warnings de TypeScript en LoginPage, RegisterPage y ForcePasswordChangePage (event handlers)
+- `start.sh` integrado correctamente en el Dockerfile del backend
+
+---
+
 ## [0.6.1] - 2026-05-21
 
 ### Fixed
