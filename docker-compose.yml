@@ -26,6 +26,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        PUBLIC_API_URL: /api/v1
     image: health-frontend:${VERSION:-0.6.0}
     container_name: health-frontend
     restart: unless-stopped

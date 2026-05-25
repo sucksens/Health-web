@@ -4,6 +4,10 @@
 
 # Health Web
 
+[![CI/CD](https://github.com/sucksens/Health-web/actions/workflows/ci.yml/badge.svg)](https://github.com/sucksens/Health-web/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/sucksens/Health-web?include_prereleases&label=release)](https://github.com/sucksens/Health-web/releases)
+[![License](https://img.shields.io/github/license/sucksens/Health-web?label=licencia)](https://github.com/sucksens/Health-web/blob/main/LICENSE)
+
 Sistema web personal de gestion de salud construido con **FastAPI** (backend) y **Astro + React** (frontend). Permite gestionar metricas corporales, metas de peso, historial medico, citas, recetas, medicamentos, documentos y adherencia a tratamientos, con generacion de reportes en PDF.
 
 ## Tabla de Contenidos
