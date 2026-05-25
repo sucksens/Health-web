@@ -43,7 +43,7 @@ def _calc_progress(start: float, current: float, target: float) -> float:
 def _calc_weekly_change(
     start: float, current: float, start_date: datetime, end_date: datetime
 ) -> float:
-    days = (end_date - start_date.replace(tzinfo=timezone.utc)).days
+    days = (end_date.replace(tzinfo=None) - start_date.replace(tzinfo=None)).days
     if days <= 0:
         return 0.0
     weeks = days / 7
