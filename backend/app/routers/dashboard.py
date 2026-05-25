@@ -55,7 +55,7 @@ def _build_goal_progress(goal: WeightGoal, db: Session) -> WeightGoalWithProgres
         progress = _calc_progress(
             goal.start_weight_kg, current_weight, goal.target_weight_kg
         )
-        total_change = round(goal.start_weight_kg - current_weight, 2)
+        total_change = round(current_weight - goal.start_weight_kg, 2)
         goal_created = goal.created_at
         if goal_created.tzinfo is not None:
             goal_created = goal_created.replace(tzinfo=None)
