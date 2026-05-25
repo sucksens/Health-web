@@ -43,13 +43,13 @@ def _calc_progress(start: float, current: float, target: float) -> float:
 def _calc_weekly_change(
     start: float, current: float, start_date: datetime, end_date: datetime
 ) -> float:
-    days = (end_date - start_date.replace(tzinfo=timezone.utc)).days
+    days = (end_date.replace(tzinfo=None) - start_date.replace(tzinfo=None)).days
     if days <= 0:
         return 0.0
     weeks = days / 7
     if weeks == 0:
         return 0.0
-    return round((start - current) / weeks, 2)
+    return round((current - start) / weeks, 2)
 
 
 @router.get(
@@ -81,7 +81,7 @@ def get_active_goal(current_user: CurrentUser, db: Session = Depends(get_db)):
         progress = _calc_progress(
             goal.start_weight_kg, current_weight, goal.target_weight_kg
         )
-        total_change = round(goal.start_weight_kg - current_weight, 2)
+        total_change = round(current_weight - goal.start_weight_kg, 2)
         avg_weekly = _calc_weekly_change(
             goal.start_weight_kg,
             current_weight,
@@ -271,7 +271,7 @@ def get_goal_details(
         progress = _calc_progress(
             goal.start_weight_kg, current_weight, goal.target_weight_kg
         )
-        total_change = round(goal.start_weight_kg - current_weight, 2)
+        total_change = round(current_weight - goal.start_weight_kg, 2)
         avg_weekly = _calc_weekly_change(
             goal.start_weight_kg,
             current_weight,
