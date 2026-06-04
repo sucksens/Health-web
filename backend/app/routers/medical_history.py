@@ -186,6 +186,19 @@ def delete_specialty(
 # ── Doctors ──────────────────────────────────────────────────────────────────
 
 
+def _assign_specialties(doc: Doctor, specialty_ids: list[int], user_id: int, db: Session):
+    if specialty_ids:
+        specs = db.execute(
+            select(Specialty).where(
+                Specialty.id.in_(specialty_ids),
+                Specialty.user_id == user_id,
+            )
+        ).scalars().all()
+        doc.specialties = list(specs)
+    else:
+        doc.specialties = []
+
+
 @router.get(
     "/doctors",
     response_model=list[DoctorOut],
@@ -209,8 +222,11 @@ def create_doctor(
     current_user: CurrentUser,
     db: Session = Depends(get_db),
 ):
-    doc = Doctor(user_id=current_user.id, **body.model_dump())
+    data = body.model_dump(exclude={"specialty_ids"})
+    doc = Doctor(user_id=current_user.id, **data)
     db.add(doc)
+    db.flush()
+    _assign_specialties(doc, body.specialty_ids, current_user.id, db)
     db.flush()
     db.refresh(doc)
     return doc
@@ -250,8 +266,11 @@ def update_doctor(
     ).scalar_one_or_none()
     if not doc:
         raise HTTPException(status_code=404, detail="Doctor no encontrado")
-    for key, value in body.model_dump(exclude_unset=True).items():
+    dump = body.model_dump(exclude_unset=True, exclude={"specialty_ids"})
+    for key, value in dump.items():
         setattr(doc, key, value)
+    if body.specialty_ids is not None:
+        _assign_specialties(doc, body.specialty_ids, current_user.id, db)
     db.flush()
     db.refresh(doc)
     return doc

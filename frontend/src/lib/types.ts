@@ -246,7 +246,7 @@ export interface DoctorOut {
   id: number
   user_id: number
   name: string
-  specialty_id: number | null
+  specialty_ids: number[]
   license_number: string | null
   phone: string | null
   email: string | null
@@ -258,7 +258,7 @@ export interface DoctorOut {
 
 export interface DoctorCreate {
   name: string
-  specialty_id?: number | null
+  specialty_ids?: number[]
   license_number?: string | null
   phone?: string | null
   email?: string | null
@@ -268,7 +268,7 @@ export interface DoctorCreate {
 
 export interface DoctorUpdate {
   name?: string
-  specialty_id?: number | null
+  specialty_ids?: number[]
   license_number?: string | null
   phone?: string | null
   email?: string | null

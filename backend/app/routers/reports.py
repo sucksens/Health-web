@@ -552,7 +552,11 @@ def report_prescriptions(
     prescriptions = db.execute(q).scalars().all()
 
     doctors = (
-        db.execute(select(Doctor).where(Doctor.user_id == current_user.id))
+        db.execute(
+            select(Doctor)
+            .where(Doctor.user_id == current_user.id)
+            .options(selectinload(Doctor.specialties))
+        )
         .scalars()
         .all()
     )
@@ -668,7 +672,11 @@ def report_appointments(
     appointments = db.execute(q).scalars().all()
 
     doctors = (
-        db.execute(select(Doctor).where(Doctor.user_id == current_user.id))
+        db.execute(
+            select(Doctor)
+            .where(Doctor.user_id == current_user.id)
+            .options(selectinload(Doctor.specialties))
+        )
         .scalars()
         .all()
     )
@@ -968,7 +976,11 @@ def report_patient_profile(
     ).scalar_one_or_none()
 
     doctors = (
-        db.execute(select(Doctor).where(Doctor.user_id == user.id)).scalars().all()
+        db.execute(
+            select(Doctor)
+            .where(Doctor.user_id == user.id)
+            .options(selectinload(Doctor.specialties))
+        ).scalars().all()
     )
 
     meds = (
@@ -1014,7 +1026,7 @@ def report_patient_profile(
         pdf.add_table(
             ["Nombre", "Especialidad", "Telefono", "Email"],
             [
-                [d.name, d.specialty_id and "-", d.phone or "-", d.email or "-"]
+                [d.name, ", ".join(s.name for s in d.specialties) or "-", d.phone or "-", d.email or "-"]
                 for d in doctors
             ],
             [50, 50, 45, 45],
