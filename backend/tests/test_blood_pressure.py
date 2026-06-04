@@ -94,6 +94,30 @@ class TestBloodPressureClassification:
         )
         assert r.json()["classification"] == "Crisis"
 
+    def test_low(self, client, admin_headers):
+        r = client.post(
+            "/api/v1/blood-pressure",
+            headers=admin_headers,
+            json={"systolic": 85, "diastolic": 55},
+        )
+        assert r.json()["classification"] == "Low"
+
+    def test_low_by_systolic(self, client, admin_headers):
+        r = client.post(
+            "/api/v1/blood-pressure",
+            headers=admin_headers,
+            json={"systolic": 85, "diastolic": 70},
+        )
+        assert r.json()["classification"] == "Low"
+
+    def test_low_by_diastolic(self, client, admin_headers):
+        r = client.post(
+            "/api/v1/blood-pressure",
+            headers=admin_headers,
+            json={"systolic": 110, "diastolic": 55},
+        )
+        assert r.json()["classification"] == "Low"
+
 
 class TestBloodPressureList:
     def test_list_readings(self, client, admin_headers):

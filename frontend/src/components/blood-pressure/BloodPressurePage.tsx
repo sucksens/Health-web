@@ -35,6 +35,7 @@ import { toast } from "sonner"
 
 function classifyBP(systolic: number, diastolic: number): string {
   if (systolic > 180 || diastolic > 120) return "Crisis"
+  if (systolic < 90 || diastolic < 60) return "Low"
   if (systolic >= 140 || diastolic >= 90) return "Stage 2"
   if (systolic >= 130 || diastolic >= 80) return "Stage 1"
   if (systolic >= 120 && diastolic < 80) return "Elevated"
@@ -43,6 +44,7 @@ function classifyBP(systolic: number, diastolic: number): string {
 
 function getClassColor(c: string): "default" | "secondary" | "destructive" | "outline" {
   switch (c) {
+    case "Low": return "outline"
     case "Normal": return "default"
     case "Elevated": return "secondary"
     case "Stage 1": return "outline"

@@ -57,6 +57,7 @@ function getBmiCategory(
 
 function getBpClassColor(c: string): "default" | "secondary" | "destructive" | "outline" {
   switch (c) {
+    case "Low": return "outline"
     case "Normal": return "default"
     case "Elevated": return "secondary"
     case "Stage 1": return "outline"

@@ -111,6 +111,8 @@ def get_stats(
                 (BloodPressure.systolic >= 130, "Stage 1"),
                 (BloodPressure.diastolic >= 80, "Stage 1"),
                 (BloodPressure.systolic >= 120, "Elevated"),
+                (BloodPressure.systolic < 90, "Low"),
+                (BloodPressure.diastolic < 60, "Low"),
                 else_="Normal",
             ).label("cls"),
         )

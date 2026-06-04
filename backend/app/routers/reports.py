@@ -1047,6 +1047,7 @@ def report_patient_profile(
 # ── 7. Blood Pressure Report ───────────────────────────────────────────────
 
 _BP_CLASS_LABELS = {
+    "Low": ("Baja", 100, 149, 237),
     "Normal": ("Estable", 76, 175, 80),
     "Elevated": ("Elevada", 234, 179, 8),
     "Stage 1": ("Alta (Etapa 1)", 249, 115, 22),
@@ -1251,6 +1252,9 @@ def report_blood_pressure(
         fig, ax = plt.subplots(figsize=(7, 3))
         ax.plot(dates_r, sys_vals, "r-o", markersize=3, label="Sistolica")
         ax.plot(dates_r, dia_vals, "b-o", markersize=3, label="Diastolica")
+        ax.axhline(
+            y=90, color="cornflowerblue", linestyle=":", linewidth=0.7, label="90 (Low)"
+        )
         ax.axhline(
             y=120, color="orange", linestyle=":", linewidth=0.7, label="120 (Elevated)"
         )
