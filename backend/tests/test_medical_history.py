@@ -88,11 +88,11 @@ class TestSpecialties:
 
 
 class TestDoctors:
-    def _create_specialty(self, client, headers):
+    def _create_specialty(self, client, headers, name="Cardiologia"):
         r = client.post(
             "/api/v1/medical-history/specialties",
             headers=headers,
-            json={"name": "Cardiologia"},
+            json={"name": name},
         )
         return r.json()["id"]
 
@@ -103,12 +103,27 @@ class TestDoctors:
             headers=admin_headers,
             json={
                 "name": "Dr. House",
-                "specialty_id": spec_id,
+                "specialty_ids": [spec_id],
                 "phone": "555-1234",
             },
         )
         assert r.status_code == 201
         assert r.json()["name"] == "Dr. House"
+        assert spec_id in r.json()["specialty_ids"]
+
+    def test_create_doctor_multiple_specialties(self, client, admin_headers):
+        spec1 = self._create_specialty(client, admin_headers, "Cardiologia")
+        spec2 = self._create_specialty(client, admin_headers, "Neurologia")
+        r = client.post(
+            "/api/v1/medical-history/doctors",
+            headers=admin_headers,
+            json={
+                "name": "Dr. Multi",
+                "specialty_ids": [spec1, spec2],
+            },
+        )
+        assert r.status_code == 201
+        assert set(r.json()["specialty_ids"]) == {spec1, spec2}
 
     def test_list_doctors(self, client, admin_headers):
         client.post(
@@ -121,10 +136,11 @@ class TestDoctors:
         assert len(r.json()) >= 1
 
     def test_update_doctor(self, client, admin_headers):
+        spec_id = self._create_specialty(client, admin_headers)
         create = client.post(
             "/api/v1/medical-history/doctors",
             headers=admin_headers,
-            json={"name": "Dr. Old"},
+            json={"name": "Dr. Old", "specialty_ids": [spec_id]},
         )
         doc_id = create.json()["id"]
 
@@ -135,6 +151,7 @@ class TestDoctors:
         )
         assert r.status_code == 200
         assert r.json()["name"] == "Dr. New"
+        assert spec_id in r.json()["specialty_ids"]
 
     def test_delete_doctor(self, client, admin_headers):
         create = client.post(

@@ -27,13 +27,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
 import { RiAddLine, RiMoreLine, RiPencilLine, RiDeleteBinLine } from "@remixicon/react"
 import { toast } from "sonner"
 
@@ -53,7 +47,7 @@ export function DoctorsPage() {
   const [deleteDoc, setDeleteDoc] = useState<DoctorOut | null>(null)
 
   const [name, setName] = useState("")
-  const [specialtyId, setSpecialtyId] = useState<string>("")
+  const [specialtyIds, setSpecialtyIds] = useState<number[]>([])
   const [licenseNum, setLicenseNum] = useState("")
   const [phone, setPhone] = useState("")
   const [email, setEmail] = useState("")
@@ -81,7 +75,7 @@ export function DoctorsPage() {
 
   const resetForm = () => {
     setName("")
-    setSpecialtyId("")
+    setSpecialtyIds([])
     setLicenseNum("")
     setPhone("")
     setEmail("")
@@ -97,7 +91,7 @@ export function DoctorsPage() {
   const openEdit = (doc: DoctorOut) => {
     setEditDoc(doc)
     setName(doc.name)
-    setSpecialtyId(doc.specialty_id ? String(doc.specialty_id) : "")
+    setSpecialtyIds(doc.specialty_ids || [])
     setLicenseNum(doc.license_number || "")
     setPhone(doc.phone || "")
     setEmail(doc.email || "")
@@ -109,7 +103,7 @@ export function DoctorsPage() {
     try {
       const payload = {
         name,
-        specialty_id: specialtyId ? Number(specialtyId) : null,
+        specialty_ids: specialtyIds,
         license_number: licenseNum || null,
         phone: phone || null,
         email: email || null,
@@ -146,9 +140,15 @@ export function DoctorsPage() {
     }
   }
 
-  const specName = (id: number | null) => {
-    if (!id) return "-"
-    return specialties.find((s) => s.id === id)?.name || "-"
+  const specNames = (ids: number[]) => {
+    if (!ids.length) return "-"
+    return ids.map((id) => specialties.find((s) => s.id === id)?.name || "-").join(", ")
+  }
+
+  const toggleSpecialty = (id: number) => {
+    setSpecialtyIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    )
   }
 
   if (!canRead) {
@@ -174,15 +174,33 @@ export function DoctorsPage() {
         <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Dr. Juan Perez" />
       </div>
       <div className="space-y-2">
-        <Label>Especialidad</Label>
-        <Select value={specialtyId} onValueChange={setSpecialtyId}>
-          <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
-          <SelectContent>
-            {specialties.map((s) => (
-              <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Label>Especialidades</Label>
+        <div className="max-h-40 overflow-y-auto rounded-md border p-2 space-y-1">
+          {specialties.length === 0 && (
+            <p className="text-xs text-muted-foreground px-1">Sin especialidades registradas</p>
+          )}
+          {specialties.map((s) => (
+            <label key={s.id} className="flex items-center gap-2 px-1 py-0.5 cursor-pointer text-sm hover:bg-muted/50 rounded">
+              <input
+                type="checkbox"
+                checked={specialtyIds.includes(s.id)}
+                onChange={() => toggleSpecialty(s.id)}
+                className="accent-primary"
+              />
+              {s.name}
+            </label>
+          ))}
+        </div>
+        {specialtyIds.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {specialtyIds.map((id) => {
+              const s = specialties.find((sp) => sp.id === id)
+              return s ? (
+                <Badge key={id} variant="secondary" className="text-xs">{s.name}</Badge>
+              ) : null
+            })}
+          </div>
+        )}
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
@@ -235,7 +253,7 @@ export function DoctorsPage() {
             {doctors.map((doc) => (
               <TableRow key={doc.id}>
                 <TableCell className="font-medium">{doc.name}</TableCell>
-                <TableCell className="text-sm">{specName(doc.specialty_id)}</TableCell>
+                <TableCell className="text-sm">{specNames(doc.specialty_ids)}</TableCell>
                 <TableCell className="text-sm">{doc.phone || "-"}</TableCell>
                 <TableCell className="text-sm">{doc.email || "-"}</TableCell>
                 {(canUpdate || canDelete) && (

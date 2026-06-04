@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Integer, DateTime, ForeignKey, String, Text, Boolean, JSON
+from sqlalchemy import Integer, DateTime, ForeignKey, String, Text, Boolean, JSON, Table, Column
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.db import Base
@@ -51,11 +51,19 @@ class Specialty(Base):
 
     user: Mapped["User"] = relationship(back_populates="specialties")
     doctors: Mapped[list["Doctor"]] = relationship(
-        back_populates="specialty", lazy="select"
+        secondary="doctor_specialties", back_populates="specialties", lazy="select"
     )
 
     def __repr__(self) -> str:
         return f"<Specialty(id={self.id}, name='{self.name}')>"
+
+
+doctor_specialties = Table(
+    "doctor_specialties",
+    Base.metadata,
+    Column("doctor_id", Integer, ForeignKey("doctors.id", ondelete="CASCADE"), primary_key=True),
+    Column("specialty_id", Integer, ForeignKey("specialties.id", ondelete="CASCADE"), primary_key=True),
+)
 
 
 class Doctor(Base):
@@ -66,9 +74,6 @@ class Doctor(Base):
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
     name: Mapped[str] = mapped_column(String(200), nullable=False)
-    specialty_id: Mapped[int | None] = mapped_column(
-        Integer, ForeignKey("specialties.id", ondelete="SET NULL"), nullable=True
-    )
     license_number: Mapped[str | None] = mapped_column(String(100), nullable=True)
     phone: Mapped[str | None] = mapped_column(String(30), nullable=True)
     email: Mapped[str | None] = mapped_column(String(255), nullable=True)
@@ -82,7 +87,9 @@ class Doctor(Base):
     )
 
     user: Mapped["User"] = relationship(back_populates="doctors")
-    specialty: Mapped["Specialty | None"] = relationship(back_populates="doctors")
+    specialties: Mapped[list["Specialty"]] = relationship(
+        secondary="doctor_specialties", back_populates="doctors", lazy="select"
+    )
     appointments: Mapped[list["Appointment"]] = relationship(
         back_populates="doctor", lazy="select"
     )

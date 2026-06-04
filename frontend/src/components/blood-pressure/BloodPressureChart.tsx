@@ -70,6 +70,7 @@ export function BloodPressureChart({ readings }: BloodPressureChartProps) {
             symbol: "none",
             lineStyle: { type: "dashed", width: 1 },
             data: [
+              { yAxis: 90, lineStyle: { color: "#3b82f6" }, label: { formatter: "90 Low", fontSize: 9 } },
               { yAxis: 120, lineStyle: { color: "#eab308" }, label: { formatter: "120 Elevated", fontSize: 9 } },
               { yAxis: 130, lineStyle: { color: "#f97316" }, label: { formatter: "130 Stage 1", fontSize: 9 } },
               { yAxis: 140, lineStyle: { color: "#ef4444" }, label: { formatter: "140 Stage 2", fontSize: 9 } },
@@ -90,6 +91,7 @@ export function BloodPressureChart({ readings }: BloodPressureChartProps) {
             symbol: "none",
             lineStyle: { type: "dashed", width: 1 },
             data: [
+              { yAxis: 60, lineStyle: { color: "#3b82f6" }, label: { formatter: "60 Low", fontSize: 9 } },
               { yAxis: 80, lineStyle: { color: "#f97316" }, label: { formatter: "80", fontSize: 9 } },
               { yAxis: 90, lineStyle: { color: "#ef4444" }, label: { formatter: "90", fontSize: 9 } },
             ],

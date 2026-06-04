@@ -552,7 +552,11 @@ def report_prescriptions(
     prescriptions = db.execute(q).scalars().all()
 
     doctors = (
-        db.execute(select(Doctor).where(Doctor.user_id == current_user.id))
+        db.execute(
+            select(Doctor)
+            .where(Doctor.user_id == current_user.id)
+            .options(selectinload(Doctor.specialties))
+        )
         .scalars()
         .all()
     )
@@ -668,7 +672,11 @@ def report_appointments(
     appointments = db.execute(q).scalars().all()
 
     doctors = (
-        db.execute(select(Doctor).where(Doctor.user_id == current_user.id))
+        db.execute(
+            select(Doctor)
+            .where(Doctor.user_id == current_user.id)
+            .options(selectinload(Doctor.specialties))
+        )
         .scalars()
         .all()
     )
@@ -968,7 +976,11 @@ def report_patient_profile(
     ).scalar_one_or_none()
 
     doctors = (
-        db.execute(select(Doctor).where(Doctor.user_id == user.id)).scalars().all()
+        db.execute(
+            select(Doctor)
+            .where(Doctor.user_id == user.id)
+            .options(selectinload(Doctor.specialties))
+        ).scalars().all()
     )
 
     meds = (
@@ -1014,7 +1026,7 @@ def report_patient_profile(
         pdf.add_table(
             ["Nombre", "Especialidad", "Telefono", "Email"],
             [
-                [d.name, d.specialty_id and "-", d.phone or "-", d.email or "-"]
+                [d.name, ", ".join(s.name for s in d.specialties) or "-", d.phone or "-", d.email or "-"]
                 for d in doctors
             ],
             [50, 50, 45, 45],
@@ -1047,6 +1059,7 @@ def report_patient_profile(
 # ── 7. Blood Pressure Report ───────────────────────────────────────────────
 
 _BP_CLASS_LABELS = {
+    "Low": ("Baja", 100, 149, 237),
     "Normal": ("Estable", 76, 175, 80),
     "Elevated": ("Elevada", 234, 179, 8),
     "Stage 1": ("Alta (Etapa 1)", 249, 115, 22),
@@ -1251,6 +1264,9 @@ def report_blood_pressure(
         fig, ax = plt.subplots(figsize=(7, 3))
         ax.plot(dates_r, sys_vals, "r-o", markersize=3, label="Sistolica")
         ax.plot(dates_r, dia_vals, "b-o", markersize=3, label="Diastolica")
+        ax.axhline(
+            y=90, color="cornflowerblue", linestyle=":", linewidth=0.7, label="90 (Low)"
+        )
         ax.axhline(
             y=120, color="orange", linestyle=":", linewidth=0.7, label="120 (Elevated)"
         )

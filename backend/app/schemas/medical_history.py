@@ -47,7 +47,7 @@ class SpecialtyOut(BaseModel):
 
 class DoctorCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
-    specialty_id: Optional[int] = None
+    specialty_ids: list[int] = Field(default_factory=list)
     license_number: Optional[str] = Field(default=None, max_length=100)
     phone: Optional[str] = Field(default=None, max_length=30)
     email: Optional[str] = Field(default=None, max_length=255)
@@ -57,7 +57,7 @@ class DoctorCreate(BaseModel):
 
 class DoctorUpdate(BaseModel):
     name: Optional[str] = Field(default=None, min_length=1, max_length=200)
-    specialty_id: Optional[int] = None
+    specialty_ids: Optional[list[int]] = None
     license_number: Optional[str] = Field(default=None, max_length=100)
     phone: Optional[str] = Field(default=None, max_length=30)
     email: Optional[str] = Field(default=None, max_length=255)
@@ -69,7 +69,7 @@ class DoctorOut(BaseModel):
     id: int
     user_id: int
     name: str
-    specialty_id: Optional[int]
+    specialty_ids: list[int] = []
     license_number: Optional[str]
     phone: Optional[str]
     email: Optional[str]
@@ -79,6 +79,26 @@ class DoctorOut(BaseModel):
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+    @model_validator(mode="before")
+    @classmethod
+    def extract_specialty_ids(cls, values):
+        if isinstance(values, dict):
+            return values
+        specialty_ids = [s.id for s in values.specialties] if hasattr(values, "specialties") else []
+        return {
+            "id": values.id,
+            "user_id": values.user_id,
+            "name": values.name,
+            "specialty_ids": specialty_ids,
+            "license_number": values.license_number,
+            "phone": values.phone,
+            "email": values.email,
+            "address": values.address,
+            "notes": values.notes,
+            "created_at": values.created_at,
+            "updated_at": values.updated_at,
+        }
 
 
 class AppointmentCreate(BaseModel):

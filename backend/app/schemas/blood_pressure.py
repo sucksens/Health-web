@@ -4,14 +4,22 @@ from pydantic import BaseModel, Field, model_validator
 
 
 def classify_bp(systolic: float, diastolic: float) -> str:
+    # Casos Criticos, se evaluan primero por ser los mas relevantes
     if systolic > 180 or diastolic > 120:
         return "Crisis"
+    if systolic < 90 or diastolic < 60:
+        return "Low"
+
+    # Rangos de Hipértension
     if systolic >= 140 or diastolic >= 90:
         return "Stage 2"
     if systolic >= 130 or diastolic >= 80:
         return "Stage 1"
+
+    # Rango de presion normal
     if systolic >= 120 and diastolic < 80:
         return "Elevated"
+
     return "Normal"
 
 
