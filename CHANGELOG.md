@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-06-04
+
+### Added
+
+- Clasificacion de hipotension (presion baja) en todo el stack: schema, SQL stats, reportes PDF, graficas y frontend
+- Multiples especialidades por doctor (relacion many-to-many con tabla pivote doctor_specialties)
+- Multi-select de especialidades con checkboxes en formulario de doctores
+- Lineas de referencia para presion baja en graficas (90 sistolica, 60 diastolica)
+- Tests de clasificacion de hipotension y especialidades multiples
+
+### Changed
+
+- Modelo Doctor: specialty_id (FK simple) → relacion M2M con specialties
+- API de doctores: specialty_id → specialty_ids (lista de enteros)
+- Reportes PDF muestran todas las especialidades del doctor separadas por coma
+- Migracion Alembic 0009 con idempotencia (detecta tablas/columnas existentes)
+
 ## [0.6.3] - 2026-05-25
 
 ### Fixed
