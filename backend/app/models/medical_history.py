@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import Integer, DateTime, ForeignKey, String, Text, Boolean, JSON, Table, Column
+from sqlalchemy import Integer, DateTime, ForeignKey, String, Text, Boolean, JSON, Table, Column, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.db import Base
@@ -268,6 +268,9 @@ class MedicalDocument(Base):
 
 class AdherenceRecord(Base):
     __tablename__ = "adherence_records"
+    __table_args__ = (
+        UniqueConstraint("prescription_detail_id", "scheduled_time", name="uq_adherence_prescription_time"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     prescription_detail_id: Mapped[int | None] = mapped_column(
@@ -282,7 +285,7 @@ class AdherenceRecord(Base):
     )
     medication_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
     scheduled_time: Mapped[datetime] = mapped_column(DateTime, nullable=False)
-    taken_at: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    taken_at: Mapped[str | None] = mapped_column(String(50), nullable=True)
     status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: now_mx())

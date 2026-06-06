@@ -61,10 +61,17 @@ export function AdherenceTracker() {
 
   useEffect(() => { if (canRead) load() }, [canRead, load])
 
+  const _updateRecordInState = (updated: AdherenceRecordOut) => {
+    const updater = (prev: AdherenceRecordOut[]) =>
+      prev.map((r) => (r.id === updated.id ? updated : r))
+    setTodayRecords(updater)
+    setHistoryRecords(updater)
+  }
+
   const handleStatus = async (record: AdherenceRecordOut, newStatus: string) => {
     try {
       const updated = await medicalHistoryApi.adherence.update(record.id, { status: newStatus })
-      setTodayRecords((prev) => prev.map((r) => (r.id === updated.id ? updated : r)))
+      _updateRecordInState(updated)
       toast.success(`Marcada como ${statusConfig[newStatus]?.label || newStatus}`)
     } catch (err: any) {
       toast.error(err.detail || "Error al actualizar")
@@ -75,7 +82,7 @@ export function AdherenceTracker() {
     if (!showNotes) return
     try {
       const updated = await medicalHistoryApi.adherence.update(showNotes.id, { notes })
-      setTodayRecords((prev) => prev.map((r) => (r.id === updated.id ? updated : r)))
+      _updateRecordInState(updated)
       toast.success("Notas guardadas")
       setShowNotes(null)
     } catch (err: any) {
@@ -247,14 +254,18 @@ export function AdherenceTracker() {
                           {record.notes && <p className="text-xs text-muted-foreground mt-1">{record.notes}</p>}
                         </div>
                       </div>
-                      {canUpdate && record.status === "pending" && (
+                      {canUpdate && (
                         <div className="flex gap-2">
-                          <Button size="sm" onClick={() => handleStatus(record, "taken")}>
-                            <RiCheckLine className="mr-1 size-4" />Tomada
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => handleStatus(record, "skipped")}>
-                            Omitir
-                          </Button>
+                          {record.status === "pending" && (
+                            <>
+                              <Button size="sm" onClick={() => handleStatus(record, "taken")}>
+                                <RiCheckLine className="mr-1 size-4" />Tomada
+                              </Button>
+                              <Button size="sm" variant="outline" onClick={() => handleStatus(record, "skipped")}>
+                                Omitir
+                              </Button>
+                            </>
+                          )}
                           <Button size="sm" variant="ghost" onClick={() => { setShowNotes(record); setNotes(record.notes || "") }}>
                             Notas
                           </Button>

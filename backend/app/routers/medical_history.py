@@ -12,6 +12,7 @@ from fastapi import (
 )
 from fastapi.responses import FileResponse
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from app.auth.dependencies import CurrentUser, require_permissions
@@ -941,8 +942,6 @@ def _generate_today_records(user_id: int, db: Session) -> None:
             )
             db.add(record)
 
-    db.flush()
-
 
 @router.get(
     "/adherence/today",
@@ -950,7 +949,10 @@ def _generate_today_records(user_id: int, db: Session) -> None:
     dependencies=[Depends(require_permissions("medical_history:read"))],
 )
 def get_today_adherence(current_user: CurrentUser, db: Session = Depends(get_db)):
-    _generate_today_records(current_user.id, db)
+    try:
+        _generate_today_records(current_user.id, db)
+    except IntegrityError:
+        pass
 
     today_start = now_mx().replace(hour=0, minute=0, second=0, microsecond=0)
     today_end = today_start.replace(hour=23, minute=59, second=59)
@@ -1002,7 +1004,10 @@ def get_adherence_history(
     limit: int = 100,
     db: Session = Depends(get_db),
 ):
-    _generate_today_records(current_user.id, db)
+    try:
+        _generate_today_records(current_user.id, db)
+    except IntegrityError:
+        pass
 
     rx_records = (
         db.execute(
