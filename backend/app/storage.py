@@ -3,8 +3,8 @@ from pathlib import Path
 
 from fastapi import UploadFile
 
-UPLOAD_DIR = Path("uploads")
-UPLOAD_DIR.mkdir(exist_ok=True)
+from app.config.paths import UPLOAD_DIR, ensure_upload_dir
+ensure_upload_dir()
 
 ALLOWED_EXTENSIONS = {".pdf", ".jpg", ".jpeg", ".png", ".gif", ".webp", ".doc", ".docx"}
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
